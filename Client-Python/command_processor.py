@@ -46,6 +46,7 @@ class CommandProcessor:
         tuple_data = split[1]
         print("OK")
         self.client_service.request_put(tuple_data)
+        print("")
 
     def read(self, split: List[str]):
         # check if the input is valid
@@ -58,6 +59,7 @@ class CommandProcessor:
         print("OK")
         response = self.client_service.request_read(tuple_data)
         print(response)
+        print("")
 
     def take(self, split: List[str]):
         # check if the input is valid
@@ -70,6 +72,7 @@ class CommandProcessor:
         print("OK")
         response = self.client_service.request_take(tuple_data)
         print(response)
+        print("")
 
     def get_tuple_spaces_state(self):
         print("OK")
@@ -80,6 +83,7 @@ class CommandProcessor:
         else:
             formatted_response = "[" + ", ".join(response) + "]"
             print(formatted_response)
+        print("")
 
     def print_usage(self):
         print("Usage:\n"
