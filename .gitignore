@@ -49,3 +49,6 @@ __pycache__/
 
 # Virtualenv
 .venv/
+
+# Tests output
+test-outputs/
