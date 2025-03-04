@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.tuplespaces.client;
 import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 
 import java.util.Scanner;
+import java.util.List;
 
 public class CommandProcessor {
 
@@ -113,9 +114,16 @@ public class CommandProcessor {
 
     private void getTupleSpacesState(){
 
-        // get the tuple spaces state
+        List<String> tupleSpacesState = this.clientService.requestGetTupleSpacesState();
+
         System.out.println("OK");
-        this.clientService.requestGetTupleSpacesState().forEach(System.out::println);
+
+        if (tupleSpacesState.isEmpty()) {
+            System.out.println("[]");
+        }
+        else {
+            System.out.println(tupleSpacesState.toString());
+        }
     }
 
     private void sleep(String[] split) {

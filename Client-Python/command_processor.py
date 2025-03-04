@@ -74,8 +74,12 @@ class CommandProcessor:
     def get_tuple_spaces_state(self):
         print("OK")
         response = self.client_service.request_get_tuple_spaces_state()
-        for tuple_data in response:
-            print(tuple_data)
+
+        if not response:
+            print("[]")
+        else:
+            formatted_response = "[" + ", ".join(response) + "]"
+            print(formatted_response)
 
     def print_usage(self):
         print("Usage:\n"
