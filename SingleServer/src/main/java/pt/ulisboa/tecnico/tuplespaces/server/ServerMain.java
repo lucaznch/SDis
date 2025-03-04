@@ -8,32 +8,39 @@ import java.lang.InterruptedException;
 
 public class ServerMain {
 
-    private static int port;
-
     public static void main(String[] args) throws IOException, InterruptedException {
 
         System.out.println(ServerMain.class.getSimpleName());
 
-        // receive and print arguments
-        System.out.printf("Received %d arguments%n", args.length);
-        for (int i = 0; i < args.length; i++) {
-            System.out.printf("arg[%d] = %s%n", i, args[i]);
-        }
-
         // check arguments
-        if (args.length != 1) {
+        if (args.length != 1 && args.length != 2) {
             System.err.println("Invalid number of arguments");
-            System.err.printf("Usage: java %s <port>%n", ServerMain.class.getName());
+            System.err.printf("Usage: java %s <port> [-debug]%n", ServerMain.class.getName());
             return;
         }
 
-        port = Integer.parseInt(args[0]);
+        boolean DEBUG = (args.length == 2 && args[1].equals("-debug"));
 
-        Server server = ServerBuilder.forPort(port).addService(new TupleSpacesServiceImpl()).build();
+        if (DEBUG) {
+            System.err.println("[\u001B[34mDEBUG\u001B[0m] Debug mode enabled");
+        
+            // receive and print arguments
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Received %d arguments%n", args.length);
+            for (int i = 0; i < args.length; i++) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] arg[%d] = %s%n", i, args[i]);
+            }
+        }
+
+
+        final int port = Integer.parseInt(args[0]);
+
+        Server server = ServerBuilder.forPort(port).addService(new TupleSpacesServiceImpl(DEBUG)).build();
 
         server.start();
 
-        System.out.printf("Server started, listening on %d%n", port);
+        if (DEBUG) {
+            System.out.printf("[\u001B[34mDEBUG\u001B[0m] Server started, listening on port: %d\n\n", port);
+        }
 
         server.awaitTermination();
     }

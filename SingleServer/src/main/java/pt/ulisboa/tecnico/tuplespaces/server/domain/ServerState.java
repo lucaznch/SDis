@@ -5,9 +5,11 @@ import java.util.List;
 
 public class ServerState {
 
+    boolean DEBUG;
     private List<String> tuples;    // tuple space
 
-    public ServerState() {
+    public ServerState(boolean debug) {
+        this.DEBUG = debug;
         this.tuples = new ArrayList<String>();
     }
 
@@ -18,6 +20,11 @@ public class ServerState {
      */
     public synchronized void put(String tuple) {        // SHOULD IT BE SYNCHRONIZED ???
         this.tuples.add(tuple);
+
+        if (DEBUG) {
+            System.err.println("[\u001B[34mDEBUG\u001B[0m] Added tuple: " + tuple);
+        }
+
         notifyAll();
     }
 
@@ -47,7 +54,14 @@ public class ServerState {
         while (true) {
             String t = getMatchingTuple(pattern);
             if (t != null) {
+                if (DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Read tuple %s for pattern: %s%n", t, pattern);
+                }
                 return t;
+            }
+
+            if (DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Blocking %s because no tuple found for pattern: %s\n\n", Thread.currentThread().getName(), pattern);
             }
 
             try {
@@ -71,7 +85,16 @@ public class ServerState {
             String t = getMatchingTuple(pattern);
             if (t != null) {
                 this.tuples.remove(t);
+
+                if (DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Took tuple %s for pattern: %s%n", t, pattern);
+                }
+
                 return t;
+            }
+
+            if (DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Blocking %s because no tuple found for pattern: %s\n\n", Thread.currentThread().getName(), pattern);
             }
 
             try {
@@ -87,6 +110,13 @@ public class ServerState {
      * @return the tuple space state of the server
      */
     public synchronized List<String> getTupleSpacesState() {
-        return new ArrayList<String>(this.tuples);
+
+        List<String> tupleSpacesState = new ArrayList<String>(this.tuples);
+
+        if (DEBUG) {
+            System.err.println("[\u001B[34mDEBUG\u001B[0m] Got tuple space state");
+        }
+
+        return tupleSpacesState;
     }
 }

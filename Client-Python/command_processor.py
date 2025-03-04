@@ -44,9 +44,9 @@ class CommandProcessor:
 
         # get the tuple
         tuple_data = split[1]
-        print("OK")
+
+        # make the call to the server
         self.client_service.request_put(tuple_data)
-        print("")
 
     def read(self, split: List[str]):
         # check if the input is valid
@@ -56,10 +56,9 @@ class CommandProcessor:
 
         # get the tuple
         tuple_data = split[1]
-        print("OK")
-        response = self.client_service.request_read(tuple_data)
-        print(response)
-        print("")
+
+        # make the call to the server and get the response
+        print(self.client_service.request_read(tuple_data) + "\n")
 
     def take(self, split: List[str]):
         # check if the input is valid
@@ -69,21 +68,19 @@ class CommandProcessor:
 
         # get the tuple
         tuple_data = split[1]
-        print("OK")
-        response = self.client_service.request_take(tuple_data)
-        print(response)
-        print("")
+
+        # make the call to the server and get the response
+        print(self.client_service.request_take(tuple_data) + "\n")
 
     def get_tuple_spaces_state(self):
-        print("OK")
+        # make the call to the server and get the response
         response = self.client_service.request_get_tuple_spaces_state()
 
         if not response:
-            print("[]")
+            print("[]\n")
         else:
             formatted_response = "[" + ", ".join(response) + "]"
-            print(formatted_response)
-        print("")
+            print(formatted_response + "\n")
 
     def print_usage(self):
         print("Usage:\n"
