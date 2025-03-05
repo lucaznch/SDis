@@ -21,6 +21,7 @@
         <mainclass>pt.ulisboa.tecnico.tuplespaces.frontend.FrontendMain</mainclass>
         <frontend.port>2001</frontend.port>
         <backend.hostport>localhost:3001</backend.hostport>
+        <debug.flag>-debug</debug.flag>         <!-- Added this line so the frontend runs in debug -->
     </properties>
 
     <dependencies>
@@ -91,6 +92,7 @@
                     <arguments>
                         <argument>${frontend.port}</argument>
                         <argument>${backend.hostport}</argument>
+                        <argument>${debug.flag}</argument>          <!-- Added this line so the frontend runs in debug -->
                     </arguments>
                 </configuration>
             </plugin>
