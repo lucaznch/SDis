@@ -16,7 +16,7 @@
 		<module>Contract</module>
 		<module>Client-Java</module>
 		<module>SingleServer</module>
-
+		<module>FrontEnd</module>
 		<!-- TO DO
 		<module>FrontEnd</module>
 		<module>ReplicaServer</module>
