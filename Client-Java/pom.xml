@@ -21,7 +21,7 @@
 		<version.exec-maven-plugin>3.0.0</version.exec-maven-plugin>
 
 		<mainclass>pt.ulisboa.tecnico.tuplespaces.client.ClientMain</mainclass>
-		<server.hostport>localhost:3001</server.hostport>
+		<server.hostport>localhost:2001</server.hostport>		<!-- host:port for the server: Server in A.1 (3001) and Frontend in A.2 (2001) -->
 		<client.id>1</client.id>
 
 	</properties>
