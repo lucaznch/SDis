@@ -1,4 +1,5 @@
 from typing import List
+from time import sleep
 
 class CommandProcessor:
     SPACE = " "
@@ -7,6 +8,7 @@ class CommandProcessor:
     PUT = "put"
     READ = "read"
     TAKE = "take"
+    SLEEP = "sleep"
     EXIT = "exit"
     GET_TUPLE_SPACES_STATE = "getTupleSpacesState"
 
@@ -27,6 +29,8 @@ class CommandProcessor:
                     self.read(split)
                 elif command == self.TAKE:
                     self.take(split)
+                elif command == self.SLEEP:
+                    self.asleep(split)
                 elif command == self.GET_TUPLE_SPACES_STATE:
                     self.get_tuple_spaces_state()
                 elif command == self.EXIT:
@@ -72,6 +76,23 @@ class CommandProcessor:
 
         # make the call to the server and get the response
         print(self.client_service.request_take(tuple_data) + "\n")
+
+    def asleep(self, split: List[str]):
+        if len(split)!=2:
+            self.print_usage()
+            return
+        
+        #checks if string can be parsed as integer
+        try:
+            time = int(split[1])
+        except ValueError as e:
+            self.print_usage()
+            return
+        
+        try:
+            time.sleep(1000) #unsure
+        except KeyboardInterrupt as e:
+            raise RuntimeError
 
     def get_tuple_spaces_state(self):
         # make the call to the server and get the response
