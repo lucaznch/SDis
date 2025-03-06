@@ -35,6 +35,7 @@ class CommandProcessor:
                     self.print_usage()
             except EOFError:
                 break
+        self.client_service.shutdown()
 
     def put(self, split: List[str]):
         # check if the input is valid

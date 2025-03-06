@@ -63,6 +63,7 @@ public class CommandProcessor {
              }
         }
         scanner.close();
+        this.clientService.shutdown();
     }
 
     private void put(String[] split){
