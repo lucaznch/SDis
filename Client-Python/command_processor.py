@@ -1,5 +1,5 @@
 from typing import List
-from time import sleep
+import time
 
 class CommandProcessor:
     SPACE = " "
@@ -84,13 +84,13 @@ class CommandProcessor:
         
         #checks if string can be parsed as integer
         try:
-            time = int(split[1])
+            time_value = int(split[1])
         except ValueError as e:
             self.print_usage()
             return
         
         try:
-            time.sleep(1000) #unsure
+            time.sleep(time_value)
         except KeyboardInterrupt as e:
             raise RuntimeError
 
