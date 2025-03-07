@@ -4,8 +4,7 @@ Distributed Systems Project 2025
 
 **Group T18**
 
-*(choose one of the following levels and erase the other one)*  
-**Difficulty level: I am Death incarnate! | Bring 'em on!**
+**Difficulty level: I am Death incarnate!**
 
 
 ### Team Members
@@ -43,6 +42,61 @@ To compile and install all modules:
 ```s
 mvn clean install
 ```
+
+### Execution
+In the **root** directory of the project, create a virtual environment, activate it and install the required packages:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install grpcio grpcio-tools
+```
+
+In the `Contract` directory, execute the following command:
+```bash
+mvn install
+mvn exec:exec
+```
+
+In the `SingleServer` directory:
+- Run the server with specific arguments:
+    ```bash
+    mvn compile exec:java -Dexec.args="<port> [-debug]"
+    ```
+    - e.g., `mvn compile exec:java -Dexec.args="3001 -debug"`
+- Run the server with predefined arguments from **pom.xml**:
+    ```bash
+    mvn compile exec:java
+    ```
+
+In the `Frontend` directory:
+- Run the frontend with specific arguments:
+    ```bash
+    mvn compile exec:java -Dexec.args="<frontendPort> <serverHost:serverPort> [-debug]"
+    ```
+    - e.g., `mvn compile exec:java -Dexec.args="2001 localhost:3001 -debug"`
+- Run the frontend with predefined arguments from **pom.xml**:
+    ```bash
+    mvn compile exec:java
+    ```
+
+In the `Client-Java` directory:
+- Run the client with specific arguments:
+    ```bash
+    mvn compile exec:java -Dexec.args="<host:port> <client_id> [-debug]"
+    ```
+    - e.g., `mvn exec:java -Dexec.args="localhost:3001 1"` for server.
+    - e.g., `mvn exec:java -Dexec.args="localhost:2001 1"` for frontend.
+- Run the client with predefined arguments from **pom.xml**:
+    ```bash
+    mvn compile exec:java
+    ```
+
+In the `Client-Python` directory, run the client with specific arguments:
+```bash
+python3 client_main.py <host:port> <client_id> [-debug]
+```
+- e.g., `python3 client_main.py localhost:3001 2` for the server
+- e.g., `python3 client_main.py localhost:2001 2` for the frontend
 
 ## Built With
 
