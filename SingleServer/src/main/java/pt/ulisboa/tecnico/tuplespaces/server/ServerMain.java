@@ -19,7 +19,8 @@ public class ServerMain {
             return;
         }
 
-        boolean DEBUG = (args.length == 2 && args[1].equals("-debug"));
+        // check if debug mode is enabled
+        final boolean DEBUG = (args.length == 2 && args[1].equals("-debug"));
 
         if (DEBUG) {
             System.err.println("[\u001B[34mDEBUG\u001B[0m] Debug mode enabled");
@@ -31,17 +32,22 @@ public class ServerMain {
             }
         }
 
-
         final int port = Integer.parseInt(args[0]);
 
-        Server server = ServerBuilder.forPort(port).addService(new TupleSpacesServiceImpl(DEBUG)).build();
+        // create a new gRPC server instance on the specified port
+        Server server = ServerBuilder.forPort(port)
+                                    .addService(new TupleSpacesServiceImpl(DEBUG))
+                                    .build();
 
+        // start the server
         server.start();
+        // server threads are running in the background
 
         if (DEBUG) {
             System.out.printf("[\u001B[34mDEBUG\u001B[0m] Server started, listening on port: %d\n\n", port);
         }
 
+        // do not exit the main thread. Wait until server is terminated.
         server.awaitTermination();
     }
 }

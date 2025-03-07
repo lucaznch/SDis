@@ -20,7 +20,7 @@ public class ClientMain {
         final int client_id = Integer.parseInt(args[1]);
 
         // check if debug mode is enabled
-        boolean DEBUG = (args.length == 3 && args[2].equals("-debug"));
+        final boolean DEBUG = (args.length == 3 && args[2].equals("-debug"));
 
         if (DEBUG) {
             System.err.println("[\u001B[34mDEBUG\u001B[0m] Debug mode enabled");
@@ -32,6 +32,7 @@ public class ClientMain {
             }
         }
 
+        // create the parser and start the command line interface
         CommandProcessor parser = new CommandProcessor(new ClientService(host_port, client_id, DEBUG));
         parser.parseInput();
 

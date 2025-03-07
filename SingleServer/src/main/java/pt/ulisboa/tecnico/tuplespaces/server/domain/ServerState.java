@@ -18,7 +18,7 @@ public class ServerState {
      * PUT operation:   adds a tuple to the tuple space
      * @param tuple the tuple to be added
      */
-    public synchronized void put(String tuple) {        // SHOULD IT BE SYNCHRONIZED ???
+    public synchronized void put(String tuple) {
         this.tuples.add(tuple);
 
         if (DEBUG) {
@@ -43,8 +43,8 @@ public class ServerState {
     }
 
     /**
-     * READ operation:  accepts a tuple description and returns a tuple that matches the description
-     *                  blocks the client until there is a tuple that satisfies the description
+     * READ operation:  accepts a tuple description to find a match in the tuple space
+     *                  blocks the client until there is a tuple that satisfies description
      *                  the tuple is not removed from the tuple space
      *
      * @param pattern the pattern to match
@@ -73,8 +73,8 @@ public class ServerState {
     }
 
     /**
-     * TAKE operation:  accepts a tuple description and returns a tuple that matches the description
-     *                  blocks the client until there is a tuple that satisfies the description
+     * TAKE operation:  accepts a tuple description to find a match in the tuple space
+     *                  blocks the client until there is a tuple that satisfies description
      *                  the tuple is removed from the tuple space
      *
      * @param pattern the pattern to match
