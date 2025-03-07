@@ -151,7 +151,7 @@ public class CommandProcessor {
                 "- read <element[,more_elements]>\n" +
                 "- take <element[,more_elements]>\n" +
                 "- getTupleSpacesState <server>\n" +
-                "- sleep <integer>\n" +
+                "- sleep <integer (seconds)>\n" +
                 "- exit\n");
     }
 
