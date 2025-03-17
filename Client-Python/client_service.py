@@ -27,7 +27,7 @@ class ClientService:
             print("OK\n")
         except grpc.RpcError as e:
             if self.DEBUG:
-                print(f"[\u001B[31mERROR\u001B[0m] Client {self.client_id} PUT request u001B[31merror\u001B[0m: {e.details}", file=sys.stderr)
+                print(f"[\u001B[31mDEBUG\u001B[0m] Client {self.client_id} PUT request \u001B[31merror\u001B[0m: {e.details}", file=sys.stderr)
 
     def request_read(self, pattern: str) -> str:
         # construct a new Protobuffer object to send as request to the server
@@ -43,7 +43,7 @@ class ClientService:
             return response.result
         except grpc.RpcError as e:
             if self.DEBUG:
-                print(f"[\u001B[31mERROR\u001B[0m] Client {self.client_id} READ request error: {e.details}", file=sys.stderr)
+                print(f"[\u001B[31mDEBUG\u001B[0m] Client {self.client_id} READ request \u001B[31merror\u001B[0m: {e.details}", file=sys.stderr)
             return None
 
     def request_take(self, pattern: str) -> str:
@@ -60,7 +60,7 @@ class ClientService:
             return response.result
         except grpc.RpcError as e:
             if self.DEBUG:
-                print(f"[\u001B[31mERROR\u001B[0m] Client {self.client_id} TAKE request error: {e.details}", file=sys.stderr)
+                print(f"[\u001B[31mDEBUG\u001B[0m] Client {self.client_id} TAKE request \u001B[31merror\u001B[0m: {e.details}", file=sys.stderr)
             return None    
 
     def request_get_tuple_spaces_state(self):
@@ -77,7 +77,7 @@ class ClientService:
             return response.tuple
         except grpc.RpcError as e:
             if self.DEBUG:
-                print(f"[\u001B[31mERROR\u001B[0m] Client {self.client_id} GET_TUPLE_SPACES_STATE request error: {e.details}", file=sys.stderr)
+                print(f"[\u001B[31mDEBUG\u001B[0m] Client {self.client_id} GET_TUPLE_SPACES_STATE request \u001B[31merror\u001B[0m: {e.details}", file=sys.stderr)
             return None
 
     def shutdown(self):

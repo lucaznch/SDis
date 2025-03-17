@@ -54,7 +54,7 @@ public class ClientService {
         }
         catch (StatusRuntimeException e) {
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Client " + client_id + " PUT request u001B[31merror\u001B[0m: " + e.getMessage());
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Client " + client_id + " PUT request \u001B[31merror\u001B[0m: " + e.getMessage());
             }
         }
     }

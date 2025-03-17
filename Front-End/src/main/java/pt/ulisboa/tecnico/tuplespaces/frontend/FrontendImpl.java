@@ -77,7 +77,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
         catch (StatusRuntimeException e) {
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend PUT request u001B[31merror\u001B[0m: " + e.getMessage());
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend PUT request \u001B[31merror\u001B[0m: " + e.getMessage());
             }
         }
     }
@@ -126,7 +126,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
         catch (StatusRuntimeException e) {
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend READ request u001B[31merror\u001B[0m: " + e.getMessage());
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend READ request \u001B[31merror\u001B[0m: " + e.getMessage());
             }
         }
     }
@@ -174,7 +174,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
         catch (StatusRuntimeException e) {
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend TAKE request u001B[31merror\u001B[0m: " + e.getMessage());
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend TAKE request \u001B[31merror\u001B[0m: " + e.getMessage());
             }
         }
     }
@@ -231,7 +231,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
         catch (StatusRuntimeException e) {
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend GET-TUPLE-SPACES-STATE request u001B[31merror\u001B[0m: " + e.getMessage());
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend GET-TUPLE-SPACES-STATE request \u001B[31merror\u001B[0m: " + e.getMessage());
             }
         }
     }
