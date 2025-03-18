@@ -23,18 +23,35 @@ import java.util.List;
 public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
     private boolean DEBUG;
-    private String host_port;
-    private final ManagedChannel channel;                           // channel to the server
-    private final TupleSpacesGrpc.TupleSpacesBlockingStub stub;     // stub to call the server
+    private final int numServers;                           // number of servers
+    private final ResponseCollector collector;              // frontend(client): collector is responsible for collecting the responses from the TupleSpaces servers
+    private final ManagedChannel[] channels;                // frontend(client): channels is the abstraction to connect to the server endpoints
+    private final TupleSpacesGrpc.TupleSpacesStub[] stubs;  // frontend(client): stubs are used to make remote calls to the server. 
+                                                            // frontend(client) will use non-blocking stubs to make remote calls to the server
 
-    public FrontendImpl(boolean debug, String host_port) {
+    public FrontendImpl(boolean debug, int numServers, String[] servers) {
         this.DEBUG = debug;
-        this.host_port = host_port;
-        this.channel = ManagedChannelBuilder.forTarget(host_port).usePlaintext().build();
-        this.stub = TupleSpacesGrpc.newBlockingStub(channel);
+        this.numServers = numServers;
+        this.collector = new ResponseCollector();
+        this.channels = new ManagedChannel[numServers];
+        this.stubs = new TupleSpacesGrpc.TupleSpacesStub[numServers];
+
+        for (int i = 0; i < numServers; i++) {
+            this.channels[i] = ManagedChannelBuilder.forTarget(servers[i])
+                                                    .usePlaintext()
+                                                    .build();       // create a channel to each server
+            this.stubs[i] = TupleSpacesGrpc.newStub(channels[i]);   // create non-blocking stub to make remote calls to each server
+        }
     }
 
 
+    /**
+     * this method is called when a PUT request is received from the client
+     * it forwards the request to the server and sends the response back to the client
+     * 
+     * @param clientRequest the request received from the client
+     * @param clientResponseObserver the observer to send the response back to the client
+     */
     @Override
     public void put(TupleSpacesOuterClass.PutRequest clientRequest, StreamObserver<TupleSpacesOuterClass.PutResponse> clientResponseObserver) {
         if (this.DEBUG) {
@@ -50,27 +67,30 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT request to server... tuple: %s\n", tuple);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT request to servers... tuple: %s\n", tuple);
         }
 
         try {
-            TupleSpacesOuterClass.PutResponse serverResponse = 
-                                this.stub.put(serverRequest);   // send the request to the SERVER and get the response from the SERVER
+            // make async calls sending the request to every server
+            for (int i = 0; i < this.numServers; i++) {
+                this.stubs[i].put(serverRequest, new FrontendPutObserver(this.collector));
+                if (this.DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent PUT request to server %d\n", i);
+                }
+            }
 
-            // in this specific operation, the response from the SERVER is nothing
+            this.collector.waitUntilAllReceived(numServers); // wait until all servers respond
 
             if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT response from server%n");
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT responses from all servers");
             }
+
+            // TODO: logic for handling the responses from the servers
 
             TupleSpacesOuterClass.PutResponse clientResponse =
                                 TupleSpacesOuterClass.PutResponse
                                                     .newBuilder()
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
-
-            if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT response back to client in %s\n\n", Thread.currentThread().getName());
-            }
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
@@ -82,6 +102,14 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
     }
 
+    /**
+     * this method is called when a READ request is received from the client
+     * it forwards the request to the server and sends the response back to the client
+     * 
+     * @param clientRequest the request received from the client
+     * @param clientResponseObserver the observer to send the response back to the client
+     */
+    /*
     @Override
     public void read(TupleSpacesOuterClass.ReadRequest clientRequest, StreamObserver<TupleSpacesOuterClass.ReadResponse> clientResponseObserver) {
         if (this.DEBUG) {
@@ -130,7 +158,16 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
         }
     }
+    */
 
+    /**
+     * this method is called when a TAKE request is received from the client
+     * it forwards the request to the server and sends the response back to the client
+     * 
+     * @param clientRequest the request received from the client
+     * @param clientResponseObserver the observer to send the response back to the client
+     */
+    /*
     @Override
     public void take(TupleSpacesOuterClass.TakeRequest clientRequest, StreamObserver<TupleSpacesOuterClass.TakeResponse> clientResponseObserver) {
         if (this.DEBUG) {
@@ -178,7 +215,16 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
         }
     }
+    */
 
+    /**
+     * this method is called when a GET-TUPLE-SPACES-STATE request is received from the client
+     * it forwards the request to the server and sends the response back to the client
+     * 
+     * @param clientRequest the request received from the client
+     * @param clientResponseObserver the observer to send the response back to the client
+     */
+    /*
     @Override
     public void getTupleSpacesState(TupleSpacesOuterClass.getTupleSpacesStateRequest clientRequest, StreamObserver<TupleSpacesOuterClass.getTupleSpacesStateResponse> clientResponseObserver) {
         if (this.DEBUG) {
@@ -235,6 +281,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
         }
     }
+    */
 }
 
 

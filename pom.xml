@@ -17,6 +17,6 @@
 		<module>Client-Java</module>
 		<module>SingleServer</module>
 		<module>Front-End</module>
-		<!-- <module>ReplicaServer</module> -->
+		<module>ReplicaServer</module>
 	</modules>
 </project>

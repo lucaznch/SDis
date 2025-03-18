@@ -21,13 +21,13 @@ public class FrontendMain {
         System.out.println(FrontendMain.class.getSimpleName());
 
         // check arguments
-        if (args.length != 2 && args.length != 3) {
+        if (args.length != 4 && args.length != 5) {
             System.err.println("Invalid number of arguments");
-            System.err.printf("Usage: java %s <port> <host:port> [-debug]%n", FrontendMain.class.getName());
+            System.err.printf("Usage: java %s <port> <host-server-r1:port-server-r1> <host-server-r2:port-server-r2> <host-server-r3:port-server-r3> [-debug]%n", FrontendMain.class.getName());
             return;
         }
 
-        final boolean DEBUG = (args.length == 3 && args[2].equals("-debug"));
+        final boolean DEBUG = (args.length == 5 && args[4].equals("-debug"));
 
         if (DEBUG) {
             System.err.println("[\u001B[34mDEBUG\u001B[0m] Debug mode enabled");
@@ -39,12 +39,21 @@ public class FrontendMain {
             }
         }
 
+        // TODO:    make frontend more robust by allowing for a variable number of servers
+        //          tip: look at lab 7 code (multi-step branch) for inspiration
+        //          for now, we assume there are exactly 3 servers
+        final int numServers = 3;
+
         final int port = Integer.parseInt(args[0]);
-        final String target = args[1];
+
+        final String[] servers = new String[numServers];
+        servers[0] = args[1];
+        servers[1] = args[2];
+        servers[2] = args[3];
 
         // create a new gRPC server instance on the specified port for client communication
         Server server = ServerBuilder.forPort(port)
-                        .addService(new FrontendImpl(DEBUG, target))
+                        .addService(new FrontendImpl(DEBUG, numServers, servers))
                         .build();
 
         // start the server

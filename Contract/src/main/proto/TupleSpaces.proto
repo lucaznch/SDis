@@ -6,6 +6,7 @@ message PutRequest {
   string newTuple = 1;
 }
 message PutResponse {
+  string ok = 1;
 }
 
 message ReadRequest {
