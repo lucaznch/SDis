@@ -85,11 +85,12 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT responses from all servers");
             }
 
-            // TODO: logic for handling the responses from the servers
+            String result = this.collector.getResponse(this.numServers);
 
             TupleSpacesOuterClass.PutResponse clientResponse =
                                 TupleSpacesOuterClass.PutResponse
                                                     .newBuilder()
+                                                    .setOk(result)
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response

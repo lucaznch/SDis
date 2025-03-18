@@ -22,12 +22,33 @@ public class ResponseCollector {
         notifyAll();
     }
 
-    public synchronized String getResponse() {
-        String response = new String();
-        for (String s : this.collectedResponses) {
-            response = response.concat(s);
+    /**
+     * This method returns the last n responses received.
+     * 
+     * @param n the number of responses to return
+     * @return the intersection of the last n responses received
+     */
+    public synchronized String getResponse(int n) {
+        int len = this.collectedResponses.size();
+
+        if (n == 3) {
+            if (len < 3) { return "NO"; }
+
+            if (this.collectedResponses.get(len - 3).equals("OK") &&
+                this.collectedResponses.get(len - 2).equals("OK") &&
+                this.collectedResponses.get(len - 1).equals("OK")) {
+                return "OK";
+            } else {
+                return "NO";
+            }
         }
-        return response;
+        else if (n == 1) {
+            if (len == 0) { return "NO"; }
+            else {
+                return this.collectedResponses.get(len - 1);
+            }
+        }
+        return "NO";
     }
 
     /**

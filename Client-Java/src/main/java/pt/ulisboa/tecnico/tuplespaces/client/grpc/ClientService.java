@@ -50,7 +50,8 @@ public class ClientService {
 
         try {
             TupleSpacesOuterClass.PutResponse response = stub.put(request); // send the request to the server and get the response from it
-            System.out.println("OK\n");
+            String result = response.getOk();
+            System.out.println(result + "\n");
         }
         catch (StatusRuntimeException e) {
             if (this.DEBUG) {
