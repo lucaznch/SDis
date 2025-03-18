@@ -1,5 +1,5 @@
 syntax = "proto3";
-package pt.ulisboa.tecnico.tuplespaces.centralized.contract;
+package pt.ulisboa.tecnico.tuplespaces.replicated.contract;
 
 
 message PutRequest {

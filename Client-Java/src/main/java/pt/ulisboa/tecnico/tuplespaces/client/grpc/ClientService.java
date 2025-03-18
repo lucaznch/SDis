@@ -1,8 +1,8 @@
 package pt.ulisboa.tecnico.tuplespaces.client.grpc;
 
 // classes generated from the proto file
-import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesGrpc;
-import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesOuterClass;
+import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesGrpc;
+import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
