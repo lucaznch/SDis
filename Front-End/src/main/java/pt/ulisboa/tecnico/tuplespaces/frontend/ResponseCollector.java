@@ -45,6 +45,15 @@ public class ResponseCollector {
                 }
             }
         }
+        else if (requestType.equals("TAKE")) {
+            // TODO: implement the TAKE response handling
+            // for now we just return the first response, same as READ
+            for (ResponseEntry e : this.collectedHistory) {
+                if (e.getRequestId() == requestId) {
+                    return e.getResponse();
+                }
+            }
+        }
 
         return "NO";
     }
