@@ -96,6 +96,10 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setOk(result)
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
+            if (this.DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT response back to client in %s\n\n", Thread.currentThread().getName());
+            }
+
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
@@ -106,7 +110,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
     }
 
-    // TODO: implement the READ method with ASYNC calls !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     /**
      * this method is called when a READ request is received from the client
      * it forwards the request to the server and sends the response back to the client
@@ -114,7 +117,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
      * @param clientRequest the request received from the client
      * @param clientResponseObserver the observer to send the response back to the client
      */
-    /*
     @Override
     public void read(TupleSpacesOuterClass.ReadRequest clientRequest, StreamObserver<TupleSpacesOuterClass.ReadResponse> clientResponseObserver) {
         if (this.DEBUG) {
@@ -123,7 +125,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
 
-        // create the request to send to the SERVER
         TupleSpacesOuterClass.ReadRequest serverRequest =
                                 TupleSpacesOuterClass.ReadRequest
                                                     .newBuilder()
@@ -131,23 +132,38 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending READ request to server... search pattern: %s\n", searchPattern);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending READ request to servers... search pattern: %s\n", searchPattern);
+        }
+
+        int currentRequestId;
+        synchronized (this) {
+            currentRequestId = this.requestId;
+            this.requestId++;
         }
 
         try {
-            TupleSpacesOuterClass.ReadResponse serverResponse = 
-                                this.stub.read(serverRequest);  // send the request to the SERVER and get the response from the SERVER
+            if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");}
 
-            String tuple = serverResponse.getResult();          // get the tuple from the response object sent by the SERVER
+            // make async calls sending the request to every server
+            for (int i = 0; i < this.numServers; i++) {
+                this.stubs[i].read(serverRequest, new FrontendReadObserver(i, currentRequestId, searchPattern, this.collector));
+                if (this.DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent READ request to server %d\n", i);
+                }
+            }
+
+            this.collector.waitUntilAllReceived(currentRequestId, "READ"); // wait until all servers respond
 
             if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received READ response from server, tuple: %s\n", tuple);
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received READ responses from all servers");
             }
+
+            String result = this.collector.getResponse(currentRequestId, "READ");
 
             TupleSpacesOuterClass.ReadResponse clientResponse = 
                                 TupleSpacesOuterClass.ReadResponse
                                                     .newBuilder()
-                                                    .setResult(tuple)
+                                                    .setResult(result)
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
             if (this.DEBUG) {
@@ -155,6 +171,19 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
+            
+            /**
+             * before completing the call, onComplete(), we need to handle the two remaining responses from the servers
+             * two choices:
+             * 1. cancel the two remaining observers
+             * 2. wait for the two remaining responses
+             */
+            if (this.DEBUG) {
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend waiting for the two remaining responses...");
+            }
+            this.collector.waitUntilAllReceived(currentRequestId, "WAIT"); // wait until all servers respond
+            result = this.collector.getResponse(currentRequestId, "WAIT"); // ignore
+
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
         catch (StatusRuntimeException e) {
@@ -163,7 +192,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
         }
     }
-    */
 
     /**
      * this method is called when a TAKE request is received from the client

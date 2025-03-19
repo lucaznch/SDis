@@ -62,27 +62,19 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         responseObserver.onCompleted();                             // after sending the response, complete the call
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Override
     public void read(TupleSpacesOuterClass.ReadRequest request, StreamObserver<TupleSpacesOuterClass.ReadResponse> responseObserver) {
+        final int maxTimeout = 5000;
+        Random rnd = new Random();
+        try {
+            int sleepTime = rnd.nextInt(maxTimeout);
+            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I NG\u001B[0m for " + sleepTime + "ms");
+            Thread.sleep(sleepTime);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        
         if (this.DEBUG) {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received READ request (#%d) in %s, %s", this.numberReadRequests, Thread.currentThread().getName(), request);
         }

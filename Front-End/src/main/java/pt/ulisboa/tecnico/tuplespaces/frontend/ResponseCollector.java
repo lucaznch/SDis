@@ -38,10 +38,21 @@ public class ResponseCollector {
             if (okCounter == 3) { return "OK"; }
             else { return "NO"; }
         }
-        else if (requestType.equals("READ")) {  // TODO
+        else if (requestType.equals("READ")) {
             for (ResponseEntry e : this.collectedHistory) {
                 if (e.getRequestId() == requestId) {
                     return e.getResponse();
+                }
+            }
+        }
+        else if (requestType.equals("WAIT")) {
+            int requestsCounter = 0;
+
+            for (ResponseEntry e : this.collectedHistory) {
+                if (e.getRequestId() == requestId) {
+                    System.err.println("[\u001B[34mDEBUG\u001B[0m] entry = " + e.toString());
+                    requestsCounter++;
+                    if (requestsCounter == 3) { break; }
                 }
             }
         }
@@ -79,7 +90,18 @@ public class ResponseCollector {
 
                 try { wait(); }
                 catch (InterruptedException e) { e.printStackTrace(); }
-            } 
+            }
+            else if (requestType.equals("WAIT")) {
+                for (ResponseEntry e : this.collectedHistory) {
+                    if (e.getRequestId() == requestId) {
+                        requestsCounter++;
+                        if (requestsCounter == 3) { return; }
+                    }
+                }
+
+                try { wait(); }
+                catch (InterruptedException e) { e.printStackTrace(); }
+            }
         }
     }
 }
