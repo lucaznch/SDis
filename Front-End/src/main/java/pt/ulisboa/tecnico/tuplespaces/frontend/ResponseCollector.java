@@ -45,17 +45,7 @@ public class ResponseCollector {
                 }
             }
         }
-        else if (requestType.equals("WAIT")) {
-            int requestsCounter = 0;
 
-            for (ResponseEntry e : this.collectedHistory) {
-                if (e.getRequestId() == requestId) {
-                    System.err.println("[\u001B[34mDEBUG\u001B[0m] entry = " + e.toString());
-                    requestsCounter++;
-                    if (requestsCounter == 3) { break; }
-                }
-            }
-        }
         return "NO";
     }
 
