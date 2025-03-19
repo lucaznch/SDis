@@ -6,8 +6,6 @@ import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 
 import io.grpc.stub.StreamObserver;
 
-// TODO: in each observer correct the first comment: servers -> server
-
 
 /**
  * the FrontendObserver class is responsible for handling the responses from a TupleSpaces server
