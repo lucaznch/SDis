@@ -35,7 +35,9 @@ public class FrontendMain {
             // receive and print arguments
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Received %d arguments%n", args.length);
             for (int i = 0; i < args.length; i++) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] arg[%d] = %s%n", i, args[i]);
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] arg[%d] = %s", i, args[i]);
+                if (i == 0 || i == 4) { System.err.println(); }
+                else { System.err.printf(" -------> \u001B[33mSERVER\u001B[0m %d%n", i-1); }
             }
         }
 

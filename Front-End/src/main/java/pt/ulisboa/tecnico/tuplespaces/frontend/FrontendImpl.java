@@ -14,17 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
- * FrontendImpl is the class that acts as the intermediary between the clients and the servers.
- * It extends the TupleSpacesGrpc.TupleSpacesImplBase class that was generated from the proto file.
- * It overrides the methods defined in the proto file.
- * It receives the requests from the clients and forwards them to the servers.
- */
 public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
     private boolean DEBUG;
-    private final int numServers;                           // number of servers
-    private final ResponseCollector collector;              // frontend(client): collector is responsible for collecting the responses from the TupleSpaces servers
+    private int requestId = 1;
+    private final int numServers;
+    private final ResponseCollector collector;              // frontend(client): collector is responsible for collecting the responses from the TupleSpaces servers associated with a request
     private final ManagedChannel[] channels;                // frontend(client): channels is the abstraction to connect to the server endpoints
     private final TupleSpacesGrpc.TupleSpacesStub[] stubs;  // frontend(client): stubs are used to make remote calls to the server. 
                                                             // frontend(client) will use non-blocking stubs to make remote calls to the server
@@ -55,7 +50,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     @Override
     public void put(TupleSpacesOuterClass.PutRequest clientRequest, StreamObserver<TupleSpacesOuterClass.PutResponse> clientResponseObserver) {
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received PUT request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
         }
 
         String tuple = clientRequest.getNewTuple();             // get the tuple from the request sent by the CLIENT
@@ -70,22 +65,30 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT request to servers... tuple: %s\n", tuple);
         }
 
+        int currentRequestId;
+        synchronized (this) {
+            currentRequestId = this.requestId;
+            this.requestId++;
+        }
+
         try {
+            if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");} 
+            
             // make async calls sending the request to every server
             for (int i = 0; i < this.numServers; i++) {
-                this.stubs[i].put(serverRequest, new FrontendPutObserver(this.collector));
+                this.stubs[i].put(serverRequest, new FrontendPutObserver(i, currentRequestId, tuple, this.collector));
                 if (this.DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent PUT request to server %d\n", i);
                 }
             }
 
-            this.collector.waitUntilAllReceived(numServers); // wait until all servers respond
+            this.collector.waitUntilAllReceived(currentRequestId, "PUT"); // wait until all servers respond
 
             if (this.DEBUG) {
                 System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT responses from all servers");
             }
 
-            String result = this.collector.getResponse(this.numServers);
+            String result = this.collector.getResponse(currentRequestId, "PUT");
 
             TupleSpacesOuterClass.PutResponse clientResponse =
                                 TupleSpacesOuterClass.PutResponse
@@ -103,6 +106,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
     }
 
+    // TODO: implement the READ method with ASYNC calls !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     /**
      * this method is called when a READ request is received from the client
      * it forwards the request to the server and sends the response back to the client
@@ -114,7 +118,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     @Override
     public void read(TupleSpacesOuterClass.ReadRequest clientRequest, StreamObserver<TupleSpacesOuterClass.ReadResponse> clientResponseObserver) {
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received READ request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received READ request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
         }
 
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
@@ -172,7 +176,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     @Override
     public void take(TupleSpacesOuterClass.TakeRequest clientRequest, StreamObserver<TupleSpacesOuterClass.TakeResponse> clientResponseObserver) {
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received TAKE request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received TAKE request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
         }
 
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
@@ -229,7 +233,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     @Override
     public void getTupleSpacesState(TupleSpacesOuterClass.getTupleSpacesStateRequest clientRequest, StreamObserver<TupleSpacesOuterClass.getTupleSpacesStateResponse> clientResponseObserver) {
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received GET-TUPLE-SPACES-STATE request from client in %s%n", Thread.currentThread().getName());
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received GET-TUPLE-SPACES-STATE request from client in %s%n", Thread.currentThread().getName());
         }
 
         TupleSpacesOuterClass.getTupleSpacesStateRequest serverRequest = 
