@@ -62,15 +62,15 @@ public class ResponseCollector {
     /**
      * this method is used to wait until all the responses for a given request ID are received.
      * @param requestId the request ID to wait for
-     * @param requestType the type of request
+     * @param n the number of responses to wait for
      */
-    public synchronized void waitUntilAllReceived(int requestId, String requestType) {
+    public synchronized void waitUntilAllReceived(int requestId, int n) {
         int requestsCounter;
 
         while (true) {
             requestsCounter = 0;
 
-            if (requestType.equals("PUT")) {
+            if (n == 3) {
                 for (ResponseEntry e : this.collectedHistory) {
                     if (e.getRequestId() == requestId) {
                         requestsCounter++;
@@ -81,21 +81,10 @@ public class ResponseCollector {
                 try { wait(); }
                 catch (InterruptedException e) { e.printStackTrace(); }
             }
-            else if (requestType.equals("READ")) {
+            else if (n == 1) {
                 for (ResponseEntry e : this.collectedHistory) {
                     if (e.getRequestId() == requestId) {
                         return;
-                    }
-                }
-
-                try { wait(); }
-                catch (InterruptedException e) { e.printStackTrace(); }
-            }
-            else if (requestType.equals("WAIT")) {
-                for (ResponseEntry e : this.collectedHistory) {
-                    if (e.getRequestId() == requestId) {
-                        requestsCounter++;
-                        if (requestsCounter == 3) { return; }
                     }
                 }
 

@@ -82,7 +82,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 }
             }
 
-            this.collector.waitUntilAllReceived(currentRequestId, "PUT"); // wait until all servers respond
+            this.collector.waitUntilAllReceived(currentRequestId, 3); // wait until all servers respond
 
             if (this.DEBUG) {
                 System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT responses from all servers");
@@ -152,10 +152,10 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 }
             }
 
-            this.collector.waitUntilAllReceived(currentRequestId, "READ"); // wait until all servers respond
+            this.collector.waitUntilAllReceived(currentRequestId, 1); // wait until all servers respond
 
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received READ responses from all servers");
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received READ responses from one server");
             }
 
             String result = this.collector.getResponse(currentRequestId, "READ");
@@ -181,8 +181,8 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             if (this.DEBUG) {
                 System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend waiting for the two remaining responses...");
             }
-            this.collector.waitUntilAllReceived(currentRequestId, "WAIT"); // wait until all servers respond
-            result = this.collector.getResponse(currentRequestId, "WAIT"); // ignore
+            this.collector.waitUntilAllReceived(currentRequestId, 3);       // wait until all servers respond
+            result = this.collector.getResponse(currentRequestId, "PUT");   // this line if for debugging purposes only
 
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
