@@ -9,8 +9,8 @@ import io.grpc.stub.StreamObserver;
 
 
 /**
- * the FrontendObserver class is responsible for handling the responses from the TupleSpaces servers
- * it handles the asynchronous responses from the servers and forwards them to the ResponseCollector
+ * the FrontendObserver class is responsible for handling the responses from a TupleSpaces server
+ * it handles the asynchronous responses from the serversand forwards them to the ResponseCollector
  * 
  */
 public class FrontendPutObserver implements StreamObserver<TupleSpacesOuterClass.PutResponse> {

@@ -7,6 +7,11 @@ import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 import io.grpc.stub.StreamObserver;
 
 
+/**
+ * the FrontendObserver class is responsible for handling the responses from a TupleSpaces server
+ * it handles the asynchronous responses from the server and forwards them to the ResponseCollector
+ * 
+ */
 public class FrontendReadObserver implements StreamObserver<TupleSpacesOuterClass.ReadResponse> {
     private final int serverId;
     private final int requestId;
