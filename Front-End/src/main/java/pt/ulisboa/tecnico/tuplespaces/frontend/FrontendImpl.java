@@ -132,7 +132,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending READ request to servers... search pattern: %s\n", searchPattern);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending READ request to servers... \n");
         }
 
         int currentRequestId;
@@ -206,6 +206,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received TAKE request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
         }
 
+        int clientId = clientRequest.getClientId();             // get the client id from the request sent by the CLIENT
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
 
         TupleSpacesOuterClass.TakeRequest serverRequest =
@@ -215,7 +216,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE request to servers... search pattern: %s\n", searchPattern);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE request to servers...\n");
         }
 
         int currentRequestId;

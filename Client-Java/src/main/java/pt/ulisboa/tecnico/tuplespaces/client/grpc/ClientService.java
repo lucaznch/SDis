@@ -97,6 +97,7 @@ public class ClientService {
         TupleSpacesOuterClass.TakeRequest request = 
             TupleSpacesOuterClass.TakeRequest
                                 .newBuilder()
+                                .setClientId(client_id)
                                 .setSearchPattern(pattern)
                                 .build();               // construct a new Protobuffer object to send as request to the server
 

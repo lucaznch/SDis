@@ -48,7 +48,7 @@ class ClientService:
 
     def request_take(self, pattern: str) -> str:
         # construct a new Protobuffer object to send as request to the server
-        request = pb2.TakeRequest(searchPattern=pattern)
+        request = pb2.TakeRequest(clientId=int(self.client_id), searchPattern=pattern)
 
         if self.DEBUG:
             print(f"[\u001B[34mDEBUG\u001B[0m] Client {self.client_id} sending TAKE request... pattern: {pattern}", file=sys.stderr)
