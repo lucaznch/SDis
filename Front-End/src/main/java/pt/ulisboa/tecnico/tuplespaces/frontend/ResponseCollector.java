@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.tuplespaces.frontend;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -10,10 +11,12 @@ import java.util.ArrayList;
 public class ResponseCollector {
 
     private ArrayList<ResponseEntry> collectedHistory;
+    private ArrayList<ResponseLockEntry> collectedLockHistory;
 
 
     public ResponseCollector() {
         this.collectedHistory = new ArrayList<ResponseEntry>();
+        this.collectedLockHistory = new ArrayList<ResponseLockEntry>();
     }
 
 
@@ -46,8 +49,6 @@ public class ResponseCollector {
             }
         }
         else if (requestType.equals("TAKE")) {
-            // TODO: implement the TAKE response handling
-            // for now we just return the first response, same as READ
             for (ResponseEntry e : this.collectedHistory) {
                 if (e.getRequestId() == requestId) {
                     return e.getResponse();
@@ -92,15 +93,41 @@ public class ResponseCollector {
             }
         }
     }
+
+    public synchronized void addLockResponse(String requestType, int requestId, String request, boolean response, int serverId) {
+        this.collectedLockHistory.add(new ResponseLockEntry(requestType, requestId, request, response, serverId));
+        notifyAll();
+    }
+
+    public synchronized boolean getLockResponse(int requestId, int serverId) {
+        int requestsCounter = 0;
+
+        for (ResponseLockEntry e : this.collectedLockHistory) {
+            if (e.getRequestId() == requestId && e.getServerId() == serverId) {
+                return e.getResponse();
+            }
+        }
+
+        return false;
+    }
+
+    public synchronized void waitUntilAllLockReceived(int requestId, String requestType) {
+        int requestsCounter;
+
+        while (true) {
+            requestsCounter = 0;
+
+            for (ResponseLockEntry e : this.collectedLockHistory) {
+                if (e.getRequestId() == requestId && e.getRequestType().equals(requestType)) {
+                    requestsCounter++;
+                    if (requestsCounter == 2) { return; }
+                }
+            }
+            
+            try { wait(); }
+            catch (InterruptedException e) { e.printStackTrace(); }
+            
+        }
+    }
 }
-
-
-
-
-
-
-
-
-
-
 

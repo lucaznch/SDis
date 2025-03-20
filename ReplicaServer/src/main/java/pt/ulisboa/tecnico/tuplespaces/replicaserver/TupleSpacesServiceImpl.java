@@ -39,7 +39,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         Random rnd = new Random();
         try {
             int sleepTime = rnd.nextInt(maxTimeout);
-            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I NG\u001B[0m for " + sleepTime + "ms");
+            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
             Thread.sleep(sleepTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -68,7 +68,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         Random rnd = new Random();
         try {
             int sleepTime = rnd.nextInt(maxTimeout);
-            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I NG\u001B[0m for " + sleepTime + "ms");
+            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
             Thread.sleep(sleepTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -91,10 +91,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         if (this.DEBUG) {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending READ response (#%d) in %s, result: %s\n\n", this.numberReadRequests++, Thread.currentThread().getName(), tuple);
         }
-        // for debugging purposes
-        List<String> tupleSpacesState = this.serverState
-                                            .getTupleSpacesState(); // get tuple space state
-        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server tuple space state: %s\n", tupleSpacesState.toString());
+        
         responseObserver.onNext(response);                          // use the responseObserver to send the response
         responseObserver.onCompleted();                             // after sending the response, complete the call
     }
@@ -105,7 +102,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         Random rnd = new Random();
         try {
             int sleepTime = rnd.nextInt(maxTimeout);
-            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I NG\u001B[0m for " + sleepTime + "ms");
+            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
             Thread.sleep(sleepTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -127,12 +124,52 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         if (this.DEBUG) {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending TAKE response (#%d) in %s, result: %s\n\n", this.numberTakeRequests++, Thread.currentThread().getName(), tuple);
         }
-        // for debugging purposes
-        List<String> tupleSpacesState = this.serverState
-                                            .getTupleSpacesState(); // get tuple space state
-        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server tuple space state: %s\n", tupleSpacesState.toString());
+
         responseObserver.onNext(response);                          // use the responseObserver to send the response
         responseObserver.onCompleted();                             // after sending the response, complete the call
+    }
+
+    @Override
+    public synchronized void requestLock(TupleSpacesOuterClass.LockRequest request, StreamObserver<TupleSpacesOuterClass.LockResponse> responseObserver) {
+        int clientId = request.getClientId();
+        boolean granted = false;
+
+        if (this.DEBUG) {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received \u001B[34mLOCK\u001B[0m request in %s, %s", Thread.currentThread().getName(), request);
+        }
+
+        granted = serverState.requestLock(clientId);
+
+        // Send response
+        TupleSpacesOuterClass.LockResponse response =
+            TupleSpacesOuterClass.LockResponse
+                                .newBuilder()
+                                .setGranted(granted)
+                                .build();
+        
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public synchronized void releaseLock(TupleSpacesOuterClass.UnlockRequest request, StreamObserver<TupleSpacesOuterClass.UnlockResponse> responseObserver) {
+        int clientId = request.getClientId();
+        boolean released = false;
+
+        if (this.DEBUG) {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received \u001B[34mUNLOCK\u001B[0m request in %s, %s", Thread.currentThread().getName(), request);
+        }
+
+        this.serverState.releaseLock();
+
+        // Send response
+        TupleSpacesOuterClass.UnlockResponse response =
+            TupleSpacesOuterClass.UnlockResponse
+                                .newBuilder()
+                                .build();
+        
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override

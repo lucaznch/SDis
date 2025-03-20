@@ -203,7 +203,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     @Override
     public void take(TupleSpacesOuterClass.TakeRequest clientRequest, StreamObserver<TupleSpacesOuterClass.TakeResponse> clientResponseObserver) {
         if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received TAKE request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received \u001B[31mTAKE\u001B[0m request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
         }
 
         int clientId = clientRequest.getClientId();             // get the client id from the request sent by the CLIENT
@@ -225,6 +225,67 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             this.requestId++;
         }
 
+        // compute voter set
+        int voterOne = clientId % 3;
+        int voterTwo = (clientId + 1) % 3;
+        if (DEBUG) {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Voter set computed: server%d and server%d\n", voterOne, voterTwo);
+        }
+
+        TupleSpacesOuterClass.LockRequest lockRequest = 
+                                TupleSpacesOuterClass.LockRequest
+                                                    .newBuilder()
+                                                    .setClientId(clientId)
+                                                    .build();   // construct a new Protobuffer object to send as request to the SERVER
+
+        boolean lockOne = false;
+        boolean lockTwo = false;
+
+        // acquire the locks
+        while (!lockOne || !lockTwo) {      // keep trying until both locks are acquired
+            try {
+                if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");}
+
+                // make async calls sending the request to the two servers in voter set
+                for (int i = 0; i < this.numServers; i++) {
+                    if (i == voterOne || i == voterTwo) {
+                        this.stubs[i].requestLock(lockRequest, new FrontendLockObserver(i, currentRequestId, searchPattern, this.collector));
+                    }
+                }
+
+                this.collector.waitUntilAllLockReceived(currentRequestId, "LOCK");
+
+                if (this.DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses. [server%d, %b] and [server%d, %b]\n", voterOne, lockOne, voterTwo, lockTwo);
+                }
+
+                lockOne = this.collector.getLockResponse(currentRequestId, voterOne);
+                lockTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
+
+                if (lockOne && lockTwo) {
+                    if (this.DEBUG) {
+                        System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend acquired both locks");
+                    }
+                }
+                else {
+                    if (this.DEBUG) {
+                        System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend failed to acquire both locks");
+                    }
+
+                    try {                   // sleep for a while before retrying
+                        Thread.sleep(1000); // sleep for 1 second
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            catch (StatusRuntimeException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // execute the TAKE operation
         try {
             if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");}
 
@@ -255,12 +316,41 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
+            
+            TupleSpacesOuterClass.UnlockRequest unlockRequest = 
+                                    TupleSpacesOuterClass.UnlockRequest
+                                                        .newBuilder()
+                                                        .setClientId(clientId)
+                                                        .build();   // construct a new Protobuffer object to send as request to the SERVER
+
+            // release the locks
+            try {
+                if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");} 
+                
+                // make async calls sending the request to the two servers in voter set
+                for (int i = 0; i < this.numServers; i++) {
+                    if (i == voterOne || i == voterTwo) {
+                        this.stubs[i].releaseLock(unlockRequest, new FrontendUnlockObserver(i, currentRequestId, searchPattern, this.collector));
+                        if (this.DEBUG) {
+                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent UNLOCK request to server %d\n", i);
+                        }
+                    }
+                }
+
+                this.collector.waitUntilAllLockReceived(currentRequestId, "UNLOCK");
+
+                if (this.DEBUG) {
+                    System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received UNLOCK responses");
+                }
+            }
+            catch (StatusRuntimeException e) {
+                e.printStackTrace();
+            }
+            
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
         catch (StatusRuntimeException e) {
-            if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend TAKE request \u001B[31merror\u001B[0m: " + e.getMessage());
-            }
+            e.printStackTrace();
         }
     }
 

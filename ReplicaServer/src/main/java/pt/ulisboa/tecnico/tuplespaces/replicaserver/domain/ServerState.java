@@ -2,17 +2,60 @@ package pt.ulisboa.tecnico.tuplespaces.replicaserver.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.LinkedList;
+
 
 public class ServerState {
 
     boolean DEBUG;
     private List<String> tuples;    // tuple space
+    private boolean isLocked = false;      // Is the lock currently taken?
+    private int lockHolder = -1;           // Client ID holding the lock
+    private Queue<Integer> lockQueue = new LinkedList<>();  // Queue for pending lock requests
+
 
     public ServerState(boolean debug) {
         this.DEBUG = debug;
         this.tuples = new ArrayList<String>();
     }
 
+    public synchronized boolean requestLock(int clientId) {
+        if (!isLocked || (this.lockHolder == clientId)) {
+            this.isLocked = true;
+            this.lockHolder = clientId;
+
+            if (DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d\n", clientId);
+            }
+        }
+        else {
+            lockQueue.add(clientId);
+
+            if (DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock request from client %d queued!\n", clientId);
+            }
+        }
+        return this.isLocked;
+    }
+
+    public synchronized void releaseLock() {
+        if (!lockQueue.isEmpty()) {
+            this.lockHolder = lockQueue.poll(); // still locked, but lock holder changes
+
+            if (DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Releasing lock! Lock granted to client %d\n", this.lockHolder);
+            }
+        }
+        else {
+            this.isLocked = false;
+            this.lockHolder = -1;
+
+            if (DEBUG) {
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] Releasing lock! Lock is now free");
+            }
+        }
+    }
 
     /**
      * PUT operation:   adds a tuple to the tuple space
