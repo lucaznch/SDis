@@ -255,12 +255,13 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
                 this.collector.waitUntilAllLockReceived(currentRequestId, "LOCK");
 
+                lockOne = this.collector.getLockResponse(currentRequestId, voterOne);
+                lockTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
+
                 if (this.DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses. [server%d, %b] and [server%d, %b]\n", voterOne, lockOne, voterTwo, lockTwo);
                 }
 
-                lockOne = this.collector.getLockResponse(currentRequestId, voterOne);
-                lockTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
 
                 if (lockOne && lockTwo) {
                     if (this.DEBUG) {
