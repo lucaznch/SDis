@@ -49,10 +49,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
      */
     @Override
     public void put(TupleSpacesOuterClass.PutRequest clientRequest, StreamObserver<TupleSpacesOuterClass.PutResponse> clientResponseObserver) {
-        if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received PUT request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
-        }
-
         String tuple = clientRequest.getNewTuple();             // get the tuple from the request sent by the CLIENT
 
         TupleSpacesOuterClass.PutRequest serverRequest = 
@@ -61,31 +57,28 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setNewTuple(tuple)
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
-        if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT request to servers... tuple: %s\n", tuple);
-        }
-
         int currentRequestId;
         synchronized (this) {
             currentRequestId = this.requestId;
             this.requestId++;
         }
 
+        if (this.DEBUG) {
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received PUT request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+        }
+
         try {
-            if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");} 
-            
-            // make async calls sending the request to every server
-            for (int i = 0; i < this.numServers; i++) {
+            for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server
                 this.stubs[i].put(serverRequest, new FrontendPutObserver(i, currentRequestId, tuple, this.collector));
                 if (this.DEBUG) {
-                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent PUT request to server %d\n", i);
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent PUT request (#%d) to server %d\n", currentRequestId, i);
                 }
             }
 
             this.collector.waitUntilAllReceived(currentRequestId, 3); // wait until all servers respond
 
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT responses from all servers");
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received PUT responses (#%d) from all servers\n", currentRequestId);
             }
 
             String result = this.collector.getResponse(currentRequestId, "PUT");
@@ -97,7 +90,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
             if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT response back to client in %s\n\n", Thread.currentThread().getName());
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending PUT response (#%d) back to client\n\n", currentRequestId);
             }
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
@@ -119,10 +112,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
      */
     @Override
     public void read(TupleSpacesOuterClass.ReadRequest clientRequest, StreamObserver<TupleSpacesOuterClass.ReadResponse> clientResponseObserver) {
-        if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received READ request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
-        }
-
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
 
         TupleSpacesOuterClass.ReadRequest serverRequest =
@@ -131,31 +120,28 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setSearchPattern(searchPattern)
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
-        if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending READ request to servers... \n");
-        }
-
         int currentRequestId;
         synchronized (this) {
             currentRequestId = this.requestId;
             this.requestId++;
         }
 
-        try {
-            if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");}
+        if (this.DEBUG) {
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received READ request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+        }
 
-            // make async calls sending the request to every server
-            for (int i = 0; i < this.numServers; i++) {
+        try {
+            for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server
                 this.stubs[i].read(serverRequest, new FrontendReadObserver(i, currentRequestId, searchPattern, this.collector));
                 if (this.DEBUG) {
-                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent READ request to server %d\n", i);
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent READ request (#%d) to server %d\n", currentRequestId, i);
                 }
             }
 
-            this.collector.waitUntilAllReceived(currentRequestId, 1); // wait until all servers respond
+            this.collector.waitUntilAllReceived(currentRequestId, 1); // wait until the first server responds
 
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received READ responses from one server");
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received READ response (#%d) from one server\n", currentRequestId);
             }
 
             String result = this.collector.getResponse(currentRequestId, "READ");
@@ -167,7 +153,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
             if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending READ response back to client in %s\n\n", Thread.currentThread().getName());
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending READ response (#%d) back to client\n\n", currentRequestId);
             }
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
@@ -182,8 +168,10 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend waiting for the two remaining responses...");
             }
             this.collector.waitUntilAllReceived(currentRequestId, 3);       // wait until all servers respond
-            result = this.collector.getResponse(currentRequestId, "PUT");   // this line if for debugging purposes only
-
+            // result = this.collector.getResponse(currentRequestId, "PUT");   // for debugging purposes only: print the responses from the 3 servers
+            if (this.DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received READ responses (#%d) from remaining servers\n", currentRequestId);
+            }
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
         catch (StatusRuntimeException e) {
@@ -202,10 +190,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
      */
     @Override
     public void take(TupleSpacesOuterClass.TakeRequest clientRequest, StreamObserver<TupleSpacesOuterClass.TakeResponse> clientResponseObserver) {
-        if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received \u001B[31mTAKE\u001B[0m request from client in %s, %s", Thread.currentThread().getName(), clientRequest);
-        }
-
         int clientId = clientRequest.getClientId();             // get the client id from the request sent by the CLIENT
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
 
@@ -215,21 +199,21 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setSearchPattern(searchPattern)
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
-        if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE request to servers...\n");
-        }
-
         int currentRequestId;
         synchronized (this) {
             currentRequestId = this.requestId;
             this.requestId++;
         }
 
+        if (this.DEBUG) {
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received \u001B[31mTAKE\u001B[0m request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+        }
+
         // compute voter set
         int voterOne = clientId % 3;
         int voterTwo = (clientId + 1) % 3;
         if (DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Voter set computed: server%d and server%d\n", voterOne, voterTwo);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Voter set computed (#%d) - server%d and server%d\n", currentRequestId, voterOne, voterTwo);
         }
 
         TupleSpacesOuterClass.LockRequest lockRequest = 
@@ -244,24 +228,23 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         // acquire the locks
         while (!lockOne || !lockTwo) {      // keep trying until both locks are acquired
             try {
-                if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");}
-
-                // make async calls sending the request to the two servers in voter set
-                for (int i = 0; i < this.numServers; i++) {
+                for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
                     if (i == voterOne || i == voterTwo) {
                         this.stubs[i].requestLock(lockRequest, new FrontendLockObserver(i, currentRequestId, searchPattern, this.collector));
+                        if (this.DEBUG) {
+                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent LOCK request (#%d) to server %d\n", currentRequestId, i);
+                        }
                     }
                 }
 
                 this.collector.waitUntilAllLockReceived(currentRequestId, "LOCK");
 
-                lockOne = this.collector.getLockResponse(currentRequestId, voterOne);
-                lockTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
-
                 if (this.DEBUG) {
-                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses. [server%d, %b] and [server%d, %b]\n", voterOne, lockOne, voterTwo, lockTwo);
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses (#%d) from both servers\n", currentRequestId);
                 }
 
+                lockOne = this.collector.getLockResponse(currentRequestId, voterOne);
+                lockTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
 
                 if (lockOne && lockTwo) {
                     if (this.DEBUG) {
@@ -270,7 +253,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 }
                 else {
                     if (this.DEBUG) {
-                        System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend failed to acquire both locks");
+                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend failed to acquire both locks: [server%d: %b, server%d: %b]\n", voterOne, lockOne, voterTwo, lockTwo);
                     }
 
                     try {                   // sleep for a while before retrying
@@ -286,22 +269,29 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
         }
 
+        /* * * * * * * * * * testing the lock mechanism * * * * * * * * * */
+        try {
+            System.out.printf("[\u001B[34mDEBUG\u001B[0m] \u001B[31mTESTING LOCK MECHANISM\u001B[0m - sleeping (#%d)", currentRequestId);
+            Thread.sleep(10000);    // sleep for 10 seconds
+            System.out.printf("[\u001B[34mDEBUG\u001B[0m] \u001B[31mTESTING LOCK MECHANISM\u001B[0m - woke up (#%d)", currentRequestId);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        /* * * * * * * * * * testing the lock mechanism * * * * * * * * * */
+
         // execute the TAKE operation
         try {
-            if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");}
-
-            // make async calls sending the request to every server
-            for (int i = 0; i < this.numServers; i++) {
+            for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server
                 this.stubs[i].take(serverRequest, new FrontendTakeObserver(i, currentRequestId, searchPattern, this.collector));
                 if (this.DEBUG) {
-                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent TAKE request to server %d\n", i);
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent TAKE request (#%d) to server %d\n", currentRequestId, i);
                 }
             }
 
             this.collector.waitUntilAllReceived(currentRequestId, 3); // wait until all servers respond
 
             if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received TAKE responses from all servers");
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received TAKE responses (#%d) from all servers\n", currentRequestId);
             }
 
             String result = this.collector.getResponse(currentRequestId, "TAKE");
@@ -313,7 +303,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
             if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE response back to client in %s\n\n", Thread.currentThread().getName());
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE response (#%d) back to client\n", currentRequestId);
             }
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
@@ -326,14 +316,11 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
             // release the locks
             try {
-                if (this.DEBUG) { System.err.printf("[\u001B[34mDEBUG\u001B[0m] Async calls!\n");} 
-                
-                // make async calls sending the request to the two servers in voter set
-                for (int i = 0; i < this.numServers; i++) {
+                for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
                     if (i == voterOne || i == voterTwo) {
                         this.stubs[i].releaseLock(unlockRequest, new FrontendUnlockObserver(i, currentRequestId, searchPattern, this.collector));
                         if (this.DEBUG) {
-                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent UNLOCK request to server %d\n", i);
+                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent UNLOCK request (#%d) to server %d\n", currentRequestId, i);
                         }
                     }
                 }
@@ -341,7 +328,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 this.collector.waitUntilAllLockReceived(currentRequestId, "UNLOCK");
 
                 if (this.DEBUG) {
-                    System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend received UNLOCK responses");
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received UNLOCK responses (#%d) from both servers\n", currentRequestId);
                 }
             }
             catch (StatusRuntimeException e) {
@@ -352,6 +339,10 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
         catch (StatusRuntimeException e) {
             e.printStackTrace();
+        }
+
+        if (this.DEBUG) {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend completed TAKE request (#%d)\n", currentRequestId);
         }
     }
 

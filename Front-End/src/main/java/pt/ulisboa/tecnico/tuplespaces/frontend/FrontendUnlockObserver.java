@@ -27,7 +27,7 @@ public class FrontendUnlockObserver implements StreamObserver<TupleSpacesOuterCl
     @Override
     public void onNext(TupleSpacesOuterClass.UnlockResponse response) {
         collector.addLockResponse("UNLOCK", this.requestId, this.request, true, this.serverId);
-        System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendReleaseLockObserver: received UNLOCK response from server %d: %s\n", this.serverId, true);
+        //System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendUnlockObserver: received UNLOCK response (#%d) from server %d\n", this.requestId, this.serverId);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class FrontendUnlockObserver implements StreamObserver<TupleSpacesOuterCl
 
     @Override
     public void onCompleted() {
-        System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendReleaseLockObserver: UNLOCK completed");
+        // System.out.printf("[\u001B[34mDEBUG\u001B[0m] FrontendUnlockObserver: UNLOCK completed (#%d)", this.requestId);
     }
 }
 

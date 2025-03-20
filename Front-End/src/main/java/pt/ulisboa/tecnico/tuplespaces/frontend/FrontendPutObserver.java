@@ -36,7 +36,7 @@ public class FrontendPutObserver implements StreamObserver<TupleSpacesOuterClass
     @Override
     public void onNext(TupleSpacesOuterClass.PutResponse response) {        
         collector.addResponse("PUT", this.requestId, this.request, response.getOk(), this.serverId);
-        System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendPutObserver: received PUT response from server %d: %s\n", this.serverId, response.getOk());
+        // System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendPutObserver: received PUT response from server %d: %s\n", this.serverId, response.getOk());
     }
 
     /**
@@ -54,7 +54,7 @@ public class FrontendPutObserver implements StreamObserver<TupleSpacesOuterClass
      */
     @Override
     public void onCompleted() {
-        System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendPutObserver: PUT completed");
+        // System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendPutObserver: PUT completed");
     }
 }
 

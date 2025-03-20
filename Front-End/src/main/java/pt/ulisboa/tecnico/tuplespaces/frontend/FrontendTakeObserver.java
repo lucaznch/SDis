@@ -34,7 +34,7 @@ public class FrontendTakeObserver implements StreamObserver<TupleSpacesOuterClas
     @Override
     public void onNext(TupleSpacesOuterClass.TakeResponse response) {        
         collector.addResponse("TAKE", this.requestId, this.request, response.getResult(), this.serverId);
-        System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendTakeObserver: received TAKE response from server %d: %s\n", this.serverId, response.getResult());
+        //System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendTakeObserver: received TAKE response from server %d: %s\n", this.serverId, response.getResult());
     }
 
     /**
@@ -52,7 +52,7 @@ public class FrontendTakeObserver implements StreamObserver<TupleSpacesOuterClas
      */
     @Override
     public void onCompleted() {
-        System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendTakeObserver: TAKE completed");
+        //System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendTakeObserver: TAKE completed");
     }
 }
 

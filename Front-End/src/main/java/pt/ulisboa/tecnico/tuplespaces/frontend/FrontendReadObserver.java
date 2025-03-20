@@ -34,7 +34,7 @@ public class FrontendReadObserver implements StreamObserver<TupleSpacesOuterClas
     @Override
     public void onNext(TupleSpacesOuterClass.ReadResponse response) {        
         collector.addResponse("READ", this.requestId, this.request, response.getResult(), this.serverId);
-        System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendReadObserver: received READ response from server %d: %s\n", this.serverId, response.getResult());
+        //System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendReadObserver: received READ response from server %d: %s\n", this.serverId, response.getResult());
     }
 
     /**
@@ -52,7 +52,7 @@ public class FrontendReadObserver implements StreamObserver<TupleSpacesOuterClas
      */
     @Override
     public void onCompleted() {
-        System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendReadObserver: READ completed");
+        //System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendReadObserver: READ completed");
     }
 }
 

@@ -24,7 +24,7 @@ public class FrontendLockObserver implements StreamObserver<TupleSpacesOuterClas
     @Override
     public void onNext(TupleSpacesOuterClass.LockResponse response) {
         collector.addLockResponse("LOCK", this.requestId, this.request, response.getGranted(), this.serverId);
-        System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendLockObserver: received LOCK response from server %d: %s\n", this.serverId, response.getGranted());
+        // System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendLockObserver: received LOCK response (#%d) from server %d: %s\n", this.requestId, this.serverId, response.getGranted());
     }
 
     @Override
@@ -34,7 +34,7 @@ public class FrontendLockObserver implements StreamObserver<TupleSpacesOuterClas
 
     @Override
     public void onCompleted() {
-        System.out.println("[\u001B[34mDEBUG\u001B[0m] FrontendLockObserver: LOCK completed");
+        //System.out.printf("[\u001B[34mDEBUG\u001B[0m] FrontendLockObserver: LOCK completed (#%d)", this.requestId);
     }
 }
 

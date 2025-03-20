@@ -22,10 +22,6 @@ import io.grpc.stub.StreamObserver;
 public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
     private boolean DEBUG;
-    private int numberPutRequests = 1;          // REMOVE THESE VARIABLES LATER OR PROTECT THEM WITH SYNCHRONIZED
-    private int numberReadRequests = 1;
-    private int numberTakeRequests = 1;
-    private int numberGetTupleSpacesStateRequests = 1;
     private ServerState serverState;
 
     public TupleSpacesServiceImpl(boolean debug) {
@@ -47,7 +43,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         
         
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received PUT request (#%d) in %s, %s", this.numberPutRequests, Thread.currentThread().getName(), request);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received PUT request in %s, %s", Thread.currentThread().getName(), request);
         }
 
         this.serverState.put(request.getNewTuple());                // add tuple to tuple space
@@ -56,7 +52,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
             TupleSpacesOuterClass.PutResponse.newBuilder().setOk("OK").build(); // construct a new Protobuffer object to send as response
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending PUT response (#%d) in %s\n\n", this.numberPutRequests++, Thread.currentThread().getName());
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending PUT response in %s, OK\n\n", Thread.currentThread().getName());
         }
         responseObserver.onNext(response);                          // use the responseObserver to send the response
         responseObserver.onCompleted();                             // after sending the response, complete the call
@@ -76,7 +72,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
 
         
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received READ request (#%d) in %s, %s", this.numberReadRequests, Thread.currentThread().getName(), request);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received READ request in %s, %s", Thread.currentThread().getName(), request);
         }
 
         String tuple = this.serverState
@@ -89,7 +85,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
                                 .build();                           // construct a new Protobuffer object to send as response
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending READ response (#%d) in %s, result: %s\n\n", this.numberReadRequests++, Thread.currentThread().getName(), tuple);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending READ response in %s, %s\n\n", Thread.currentThread().getName(), tuple);
         }
         
         responseObserver.onNext(response);                          // use the responseObserver to send the response
@@ -109,7 +105,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         }
         
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received TAKE request (#%d) in %s, %s", this.numberTakeRequests, Thread.currentThread().getName(), request);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received TAKE request in %s, %s", Thread.currentThread().getName(), request);
         }
 
         String tuple = this.serverState
@@ -122,7 +118,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
                                 .build();                           // construct a new Protobuffer object to send as response
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending TAKE response (#%d) in %s, result: %s\n\n", this.numberTakeRequests++, Thread.currentThread().getName(), tuple);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending TAKE response in %s, %s\n\n", Thread.currentThread().getName(), tuple);
         }
 
         responseObserver.onNext(response);                          // use the responseObserver to send the response
@@ -175,7 +171,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     @Override
     public void getTupleSpacesState(TupleSpacesOuterClass.getTupleSpacesStateRequest request, StreamObserver<TupleSpacesOuterClass.getTupleSpacesStateResponse> responseObserver) {
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received GET-TUPLE-SPACES-STATE request (#%d) in %s%n", this.numberGetTupleSpacesStateRequests, Thread.currentThread().getName());
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received GET-TUPLE-SPACES-STATE request in %s%n", Thread.currentThread().getName());
         }
 
         List<String> tupleSpacesState = this.serverState
@@ -192,7 +188,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         TupleSpacesOuterClass.getTupleSpacesStateResponse response = responseBuilder.build();   // build the response
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending GET-TUPLE-SPACES-STATE response (#%d) in %s, result %s\n\n", this.numberGetTupleSpacesStateRequests++, Thread.currentThread().getName(), tupleSpacesState.toString());
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending GET-TUPLE-SPACES-STATE response in %s, result %s\n\n", Thread.currentThread().getName(), tupleSpacesState.toString());
         }
 
         responseObserver.onNext(response);                          // use the responseObserver to send the response
