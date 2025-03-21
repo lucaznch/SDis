@@ -10,24 +10,30 @@ import java.util.List;
  */
 public class ResponseCollector {
 
-    private ArrayList<ResponseEntry> collectedHistory;          // table with all the responses received from the servers
+    private ArrayList<ResponseEntry> collectedHistory;          // table with all the PUT/READ/TAKE responses received from the servers
                                                                 // | requestType | requestId | request | response | serverId |
                                                                 // |     PUT     |     1     |   ...   |   ...    |    0     |
                                                                 // |     PUT     |     1     |   ...   |   ...    |    1     |
                                                                 // |     PUT     |     1     |   ...   |   ...    |    2     |
-                                                                // |    READ     |     6     |   ...   |   ...    |    0     |
 
-    private ArrayList<ResponseLockEntry> collectedLockHistory;  // table with all the lock responses received from the servers
+    private ArrayList<ResponseLockEntry> collectedLockHistory;  // table with all the LOCK/UNLOCK responses received from the servers
                                                                 // | requestType | requestId | request | response | serverId |
                                                                 // |     LOCK    |     1     |   ...   |   ...    |    0     |
                                                                 // |     LOCK    |     1     |   ...   |   ...    |    2     |
                                                                 // |    UNLOCK   |     1     |   ...   |   ...    |    0     |
                                                                 // |    UNLOCK   |     1     |   ...   |   ...    |    2     |
 
+    private ArrayList<ResponseGetEntry> collectedGetHistory;    // table with all the GET responses received from the servers
+                                                                // | requestId |    response    | serverId |
+                                                                // |     1     | [<1,2>, <3,4>] |    0     |
+                                                                // |     1     | [<1,2>, <3,4>] |    1     |
+                                                                // |     1     | [<1,2>, <3,4>] |    2     |
+
 
     public ResponseCollector() {
         this.collectedHistory = new ArrayList<ResponseEntry>();
         this.collectedLockHistory = new ArrayList<ResponseLockEntry>();
+        this.collectedGetHistory = new ArrayList<ResponseGetEntry>();
     }
 
 
@@ -175,6 +181,58 @@ public class ResponseCollector {
             try { wait(); }
             catch (InterruptedException e) { e.printStackTrace(); }
             
+        }
+    }
+
+    /**
+     * this method is used to add a get response to the collected history
+     * @param requestId the request ID
+     * @param response the response
+     * @param serverId the server ID
+     */
+    public synchronized void addGetResponse(int requestId, List<String> response, int serverId) {
+        this.collectedGetHistory.add(new ResponseGetEntry(requestId, response, serverId));
+        notifyAll();
+    }
+
+    /**
+     * this method is used to get tuple spaces from each server and combine them into a single response
+     * NOTE: requests IDs are unique! in the table, there are 3 entries for each request ID, one for each server
+     * 
+     * @param requestId the request ID
+     * @return the combined response with the tuple spaces from each server
+     */
+    public synchronized List<String> getGetResponse(int requestId) {
+        List<String> combinedResponse = new ArrayList<>();
+        
+        for (ResponseGetEntry e : this.collectedGetHistory) {
+            if (e.getRequestId() == requestId) {
+                combinedResponse.addAll(e.getResponse());
+            }
+        }
+        
+        return combinedResponse;
+    }
+
+    /**
+     * this method is used to wait until all the get responses for a given request ID are received.
+     * @param requestId the request ID to wait for
+     */
+    public synchronized void waitUntilAllGetReceived(int requestId) {
+        int requestsCounter;
+
+        while (true) {
+            requestsCounter = 0;
+
+            for (ResponseGetEntry e : this.collectedGetHistory) {
+                if (e.getRequestId() == requestId) {
+                    requestsCounter++;
+                    if (requestsCounter == 3) { return; }
+                }
+            }
+            
+            try { wait(); }
+            catch (InterruptedException e) { e.printStackTrace(); }
         }
     }
 }

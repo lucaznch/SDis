@@ -314,56 +314,52 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
      * @param clientRequest the request received from the client
      * @param clientResponseObserver the observer to send the response back to the client
      */
-    /*
     @Override
     public void getTupleSpacesState(TupleSpacesOuterClass.getTupleSpacesStateRequest clientRequest, StreamObserver<TupleSpacesOuterClass.getTupleSpacesStateResponse> clientResponseObserver) {
-        if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received GET-TUPLE-SPACES-STATE request from client in %s%n", Thread.currentThread().getName());
-        }
-
         TupleSpacesOuterClass.getTupleSpacesStateRequest serverRequest = 
                                 TupleSpacesOuterClass.getTupleSpacesStateRequest
                                                     .newBuilder()
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
+        int currentRequestId;
+        synchronized (this) {
+            currentRequestId = this.requestId;
+            this.requestId++;
+        }
+
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending GET-TUPLE-SPACES-STATE request to server\n");
+            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received GET-TUPLE-SPACES-STATE request (#%d) from client in %s\n", currentRequestId, Thread.currentThread().getName());
         }
 
         try {
-            TupleSpacesOuterClass.getTupleSpacesStateResponse serverResponse = 
-                                this.stub.getTupleSpacesState(serverRequest);   // send the request to the SERVER and get the response from the SERVER
-
-            // get the state from the response object sent by the SERVER by iterating over the list of tuples
-            int i = 0;
-            int tupleSpacesStateCount = serverResponse.getTupleCount();         // length of the list of tuples
-            List<String> state = new ArrayList<>();
-
-            while (i < tupleSpacesStateCount) {
-                state.add(serverResponse.getTuple(i));                          // iterate over the list of tuples and add them to the state
-                i++;
+            for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server
+                this.stubs[i].getTupleSpacesState(serverRequest, new FrontendGetTupleSpacesStateObserver(i, currentRequestId, this.collector));
+                if (this.DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent GET-TUPLE-SPACES-STATE request (#%d) to server %d\n", currentRequestId, i);
+                }
             }
+
+            this.collector.waitUntilAllGetReceived(currentRequestId); // wait until all servers respond
 
             if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received GET-TUPLE-SPACES-STATE response from server, state: %s\n", state.toString());
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received GET-TUPLE-SPACES-STATE responses (#%d) from all servers\n", currentRequestId);
             }
 
-            // create the response to send to the CLIENT
+            List<String> spaces = this.collector.getGetResponse(currentRequestId);
+
             TupleSpacesOuterClass.getTupleSpacesStateResponse.Builder clientResponseBuilder =
                                 TupleSpacesOuterClass.getTupleSpacesStateResponse.newBuilder();  // create a response builder object to build the response
 
-            for (String tuple : state) {
-                clientResponseBuilder.addTuple(tuple);                          // keep adding tuples to response
-            }
+            for (String tuple : spaces) { clientResponseBuilder.addTuple(tuple); }
 
-            TupleSpacesOuterClass.getTupleSpacesStateResponse clientResponse = clientResponseBuilder.build();   // build the response
+            TupleSpacesOuterClass.getTupleSpacesStateResponse clientResponse = clientResponseBuilder.build();   // construct a new Protobuffer object to send as response to the CLIENT
 
             if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending GET-TUPLE-SPACES-STATE response back to client in %s\n\n", Thread.currentThread().getName());
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending GET-TUPLE-SPACES-STATE response (#%d) back to client\n\n", currentRequestId);
             }
 
-            clientResponseObserver.onNext(clientResponse);                      // use the responseObserver to send the response
-            clientResponseObserver.onCompleted();                               // after sending the response, complete the call
+            clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
+            clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
         catch (StatusRuntimeException e) {
             if (this.DEBUG) {
@@ -371,9 +367,5 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             }
         }
     }
-    */
 }
-
-
-
 
