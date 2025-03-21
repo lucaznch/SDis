@@ -57,7 +57,7 @@ mvn install
 mvn exec:exec
 ```
 
-In the `SingleServer` directory:
+In the `ReplicaServer` directory, for each server:
 - Run the server with specific arguments:
     ```bash
     mvn compile exec:java -Dexec.args="<port> [-debug]"
@@ -71,9 +71,9 @@ In the `SingleServer` directory:
 In the `Frontend` directory:
 - Run the frontend with specific arguments:
     ```bash
-    mvn compile exec:java -Dexec.args="<frontendPort> <serverHost:serverPort> [-debug]"
+    mvn compile exec:java -Dexec.args="<frontendPort> <server1-host:server1-port> <server2-host:server2-port> <server3-host:server3-port> [-debug]"
     ```
-    - e.g., `mvn compile exec:java -Dexec.args="2001 localhost:3001 -debug"`
+    - e.g., `mvn compile exec:java -Dexec.args="2001 localhost:3001 localhost:3002 localhost:3003 -debug"`
 - Run the frontend with predefined arguments from **pom.xml**:
     ```bash
     mvn compile exec:java
@@ -84,8 +84,7 @@ In the `Client-Java` directory:
     ```bash
     mvn compile exec:java -Dexec.args="<host:port> <client_id> [-debug]"
     ```
-    - e.g., `mvn exec:java -Dexec.args="localhost:3001 1"` for server.
-    - e.g., `mvn exec:java -Dexec.args="localhost:2001 1"` for frontend.
+    - e.g., `mvn exec:java -Dexec.args="localhost:2001 1"`
 - Run the client with predefined arguments from **pom.xml**:
     ```bash
     mvn compile exec:java
@@ -95,8 +94,12 @@ In the `Client-Python` directory, run the client with specific arguments:
 ```bash
 python3 client_main.py <host:port> <client_id> [-debug]
 ```
-- e.g., `python3 client_main.py localhost:3001 2` for the server
-- e.g., `python3 client_main.py localhost:2001 2` for the frontend
+- e.g., `python3 client_main.py localhost:2001 2`
+
+
+>[!NOTE]
+> client IDs should be unique!
+
 
 ## Built With
 
