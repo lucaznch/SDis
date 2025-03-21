@@ -2,6 +2,8 @@ package pt.ulisboa.tecnico.tuplespaces.replicaserver;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerInterceptors;
+
 import java.io.IOException;
 import java.lang.InterruptedException;
 
@@ -36,7 +38,7 @@ public class ServerMain {
 
         // create a new gRPC server instance on the specified port
         Server server = ServerBuilder.forPort(port)
-                                    .addService(new TupleSpacesServiceImpl(DEBUG))
+                                    .addService(ServerInterceptors.intercept(new TupleSpacesServiceImpl(DEBUG), new HeaderServerInterceptor()))
                                     .build();
 
         // start the server

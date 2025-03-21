@@ -31,20 +31,27 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
 
     @Override
     public void put(TupleSpacesOuterClass.PutRequest request, StreamObserver<TupleSpacesOuterClass.PutResponse> responseObserver) {
-        final int maxTimeout = 5000;
-        Random rnd = new Random();
-        // the following code is used to simulate a delay in the server for testing purposes
-        try {
-            int sleepTime = rnd.nextInt(maxTimeout);
-            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
-            Thread.sleep(sleepTime);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        
+        String headerValue = HeaderServerInterceptor.HEADER_VALUE_CONTEXT_KEY.get();// get the header value from the context
+                
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received PUT request in %s, %s", Thread.currentThread().getName(), request);
+            if (headerValue != null) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received PUT request in %s, with delay (%s), %s", Thread.currentThread().getName(), headerValue, request);
+            }
+            else {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received PUT request in %s, %s", Thread.currentThread().getName(), request);
+            }
+        }
+
+        if (headerValue != null) {
+            try {
+                int sleepTime = Integer.parseInt(headerValue);
+                if (this.DEBUG) {
+                    System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "s");
+                }
+                Thread.sleep(sleepTime * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         this.serverState.put(request.getNewTuple());                // add tuple to tuple space
@@ -61,20 +68,27 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
 
     @Override
     public void read(TupleSpacesOuterClass.ReadRequest request, StreamObserver<TupleSpacesOuterClass.ReadResponse> responseObserver) {
-        final int maxTimeout = 5000;
-        Random rnd = new Random();
-        // the following code is used to simulate a delay in the server for testing purposes
-        try {
-            int sleepTime = rnd.nextInt(maxTimeout);
-            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
-            Thread.sleep(sleepTime);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        String headerValue = HeaderServerInterceptor.HEADER_VALUE_CONTEXT_KEY.get();// get the header value from the context
+                
+        if (this.DEBUG) {
+            if (headerValue != null) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received READ request in %s, with delay (%s), %s", Thread.currentThread().getName(), headerValue, request);
+            }
+            else {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received READ request in %s, %s", Thread.currentThread().getName(), request);
+            }
         }
 
-        
-        if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received READ request in %s, %s", Thread.currentThread().getName(), request);
+        if (headerValue != null) {
+            try {
+                int sleepTime = Integer.parseInt(headerValue);
+                if (this.DEBUG) {
+                    System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "s");
+                }
+                Thread.sleep(sleepTime * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         String tuple = this.serverState
@@ -96,8 +110,27 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
 
     @Override
     public void take(TupleSpacesOuterClass.TakeRequest request, StreamObserver<TupleSpacesOuterClass.TakeResponse> responseObserver) {        
+        String headerValue = HeaderServerInterceptor.HEADER_VALUE_CONTEXT_KEY.get();// get the header value from the context
+
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received TAKE request in %s, %s", Thread.currentThread().getName(), request);
+            if (headerValue != null) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received TAKE request in %s, with delay (%s), %s", Thread.currentThread().getName(), headerValue, request);
+            }
+            else {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received TAKE request in %s, %s", Thread.currentThread().getName(), request);
+            }
+        }
+
+        if (headerValue != null) {
+            try {
+                int sleepTime = Integer.parseInt(headerValue);
+                if (this.DEBUG) {
+                    System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "s");
+                }
+                Thread.sleep(sleepTime * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         String tuple = this.serverState
@@ -126,18 +159,6 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         }
 
         boolean granted = serverState.acquireLock(clientId);    // acquire lock at any cost
-
-        final int maxTimeout = 5000;
-        Random rnd = new Random();
-        // the following code is used to simulate a delay in the server for testing purposes
-        try {
-            int sleepTime = rnd.nextInt(maxTimeout);
-            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
-            Thread.sleep(sleepTime);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
 
         // Send response
         TupleSpacesOuterClass.LockResponse response =

@@ -5,10 +5,11 @@ import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesGrpc;
 import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 
 import io.grpc.stub.StreamObserver;     // StreamObserver is used to send responses to the Client
-
 import io.grpc.ManagedChannel;          // ManagedChannel is used to create a channel to the Server
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,8 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     private final ManagedChannel[] channels;                // frontend(client): channels is the abstraction to connect to the server endpoints
     private final TupleSpacesGrpc.TupleSpacesStub[] stubs;  // frontend(client): stubs are used to make remote calls to the server. 
                                                             // frontend(client) will use non-blocking stubs to make remote calls to the server
+    private final Metadata.Key<String> CUSTOM_HEADER_KEY = Metadata.Key.of("delay", Metadata.ASCII_STRING_MARSHALLER);
+
 
     public FrontendImpl(boolean debug, int numServers, String[] servers) {
         this.DEBUG = debug;
@@ -75,7 +78,18 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
         try {
             for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server
-                this.stubs[i].put(serverRequest, new FrontendPutObserver(i, currentRequestId, tuple, this.collector));
+                
+                if (headerValue != null) {
+                    String[] delays = headerValue.split(" ");
+
+                    Metadata metadata = new Metadata();
+                    metadata.put(CUSTOM_HEADER_KEY, delays[i]);
+                    this.stubs[i].withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata)).put(serverRequest, new FrontendPutObserver(i, currentRequestId, tuple, this.collector));
+                }
+                else {                
+                    this.stubs[i].put(serverRequest, new FrontendPutObserver(i, currentRequestId, tuple, this.collector));
+                }
+                
                 if (this.DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent PUT request (#%d) to server %d\n", currentRequestId, i);
                 }
@@ -144,7 +158,18 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
         try {
             for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server
-                this.stubs[i].read(serverRequest, new FrontendReadObserver(i, currentRequestId, searchPattern, this.collector));
+                
+                if (headerValue != null) {
+                    String[] delays = headerValue.split(" ");
+
+                    Metadata metadata = new Metadata();
+                    metadata.put(CUSTOM_HEADER_KEY, delays[i]);
+                    this.stubs[i].withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata)).read(serverRequest, new FrontendReadObserver(i, currentRequestId, searchPattern, this.collector));
+                }
+                else {                
+                    this.stubs[i].read(serverRequest, new FrontendReadObserver(i, currentRequestId, searchPattern, this.collector));
+                }
+
                 if (this.DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent READ request (#%d) to server %d\n", currentRequestId, i);
                 }
@@ -264,7 +289,18 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         // phase 2: execute the operation and release the locks
         try {
             for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server to execute the operation
-                this.stubs[i].take(serverRequest, new FrontendTakeObserver(i, currentRequestId, searchPattern, this.collector));
+                
+                if (headerValue != null) {
+                    String[] delays = headerValue.split(" ");
+
+                    Metadata metadata = new Metadata();
+                    metadata.put(CUSTOM_HEADER_KEY, delays[i]);
+                    this.stubs[i].withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata)).take(serverRequest, new FrontendTakeObserver(i, currentRequestId, searchPattern, this.collector));
+                }
+                else {                
+                    this.stubs[i].take(serverRequest, new FrontendTakeObserver(i, currentRequestId, searchPattern, this.collector));
+                }
+                
                 if (this.DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent TAKE request (#%d) to server %d\n", currentRequestId, i);
                 }
