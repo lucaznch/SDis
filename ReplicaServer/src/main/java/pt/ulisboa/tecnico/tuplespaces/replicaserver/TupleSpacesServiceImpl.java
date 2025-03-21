@@ -33,6 +33,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     public void put(TupleSpacesOuterClass.PutRequest request, StreamObserver<TupleSpacesOuterClass.PutResponse> responseObserver) {
         final int maxTimeout = 5000;
         Random rnd = new Random();
+        // the following code is used to simulate a delay in the server for testing purposes
         try {
             int sleepTime = rnd.nextInt(maxTimeout);
             System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
@@ -62,6 +63,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     public void read(TupleSpacesOuterClass.ReadRequest request, StreamObserver<TupleSpacesOuterClass.ReadResponse> responseObserver) {
         final int maxTimeout = 5000;
         Random rnd = new Random();
+        // the following code is used to simulate a delay in the server for testing purposes
         try {
             int sleepTime = rnd.nextInt(maxTimeout);
             System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
@@ -93,17 +95,7 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     }
 
     @Override
-    public void take(TupleSpacesOuterClass.TakeRequest request, StreamObserver<TupleSpacesOuterClass.TakeResponse> responseObserver) {
-        final int maxTimeout = 5000;
-        Random rnd = new Random();
-        try {
-            int sleepTime = rnd.nextInt(maxTimeout);
-            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
-            Thread.sleep(sleepTime);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
+    public void take(TupleSpacesOuterClass.TakeRequest request, StreamObserver<TupleSpacesOuterClass.TakeResponse> responseObserver) {        
         if (this.DEBUG) {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received TAKE request in %s, %s", Thread.currentThread().getName(), request);
         }
@@ -126,15 +118,26 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     }
 
     @Override
-    public synchronized void requestLock(TupleSpacesOuterClass.LockRequest request, StreamObserver<TupleSpacesOuterClass.LockResponse> responseObserver) {
+    public void requestLock(TupleSpacesOuterClass.LockRequest request, StreamObserver<TupleSpacesOuterClass.LockResponse> responseObserver) {
         int clientId = request.getClientId();
-        boolean granted = false;
 
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received \u001B[34mLOCK\u001B[0m request in %s, %s", Thread.currentThread().getName(), request);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received LOCK request in %s, %s", Thread.currentThread().getName(), request);
         }
 
-        granted = serverState.requestLock(clientId);
+        boolean granted = serverState.acquireLock(clientId);    // acquire lock at any cost
+
+        final int maxTimeout = 5000;
+        Random rnd = new Random();
+        // the following code is used to simulate a delay in the server for testing purposes
+        try {
+            int sleepTime = rnd.nextInt(maxTimeout);
+            System.out.println("[\u001B[34mDEBUG\u001B[0m] \u001B[31mS L E E P I N G\u001B[0m for " + sleepTime + "ms");
+            Thread.sleep(sleepTime);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
 
         // Send response
         TupleSpacesOuterClass.LockResponse response =
@@ -148,15 +151,12 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     }
 
     @Override
-    public synchronized void releaseLock(TupleSpacesOuterClass.UnlockRequest request, StreamObserver<TupleSpacesOuterClass.UnlockResponse> responseObserver) {
-        int clientId = request.getClientId();
-        boolean released = false;
-
+    public void releaseLock(TupleSpacesOuterClass.UnlockRequest request, StreamObserver<TupleSpacesOuterClass.UnlockResponse> responseObserver) {
         if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received \u001B[34mUNLOCK\u001B[0m request in %s, %s", Thread.currentThread().getName(), request);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received UNLOCK request in %s, %s", Thread.currentThread().getName(), request);
         }
 
-        this.serverState.releaseLock();
+        this.serverState.freeLock();
 
         // Send response
         TupleSpacesOuterClass.UnlockResponse response =

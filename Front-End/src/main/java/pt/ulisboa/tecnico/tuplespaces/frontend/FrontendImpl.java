@@ -222,66 +222,30 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setClientId(clientId)
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
-        boolean lockOne = false;
-        boolean lockTwo = false;
-
-        // acquire the locks
-        while (!lockOne || !lockTwo) {      // keep trying until both locks are acquired
-            try {
-                for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
-                    if (i == voterOne || i == voterTwo) {
-                        this.stubs[i].requestLock(lockRequest, new FrontendLockObserver(i, currentRequestId, searchPattern, this.collector));
-                        if (this.DEBUG) {
-                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent LOCK request (#%d) to server %d\n", currentRequestId, i);
-                        }
-                    }
-                }
-
-                this.collector.waitUntilAllLockReceived(currentRequestId, "LOCK");
-
-                if (this.DEBUG) {
-                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses (#%d) from both servers\n", currentRequestId);
-                }
-
-                lockOne = this.collector.getLockResponse(currentRequestId, voterOne);
-                lockTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
-
-                if (lockOne && lockTwo) {
+        // phase 1: acquire the locks
+        try {
+            for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
+                if (i == voterOne || i == voterTwo) {
+                    this.stubs[i].requestLock(lockRequest, new FrontendLockObserver(i, currentRequestId, searchPattern, this.collector));
                     if (this.DEBUG) {
-                        System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend acquired both locks");
-                    }
-                }
-                else {
-                    if (this.DEBUG) {
-                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend failed to acquire both locks: [server%d: %b, server%d: %b]\n", voterOne, lockOne, voterTwo, lockTwo);
-                    }
-
-                    try {                   // sleep for a while before retrying
-                        Thread.sleep(1000); // sleep for 1 second
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
+                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent LOCK request (#%d) to server %d\n", currentRequestId, i);
                     }
                 }
             }
-            catch (StatusRuntimeException e) {
-                e.printStackTrace();
+
+            this.collector.waitUntilAllLockReceived(currentRequestId, "LOCK");
+
+            if (this.DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses (#%d) from both servers\n", currentRequestId);
             }
         }
-
-        /* * * * * * * * * * testing the lock mechanism * * * * * * * * * */
-        try {
-            System.out.printf("[\u001B[34mDEBUG\u001B[0m] \u001B[31mTESTING LOCK MECHANISM\u001B[0m - sleeping (#%d)", currentRequestId);
-            Thread.sleep(10000);    // sleep for 10 seconds
-            System.out.printf("[\u001B[34mDEBUG\u001B[0m] \u001B[31mTESTING LOCK MECHANISM\u001B[0m - woke up (#%d)", currentRequestId);
-        } catch (InterruptedException e) {
+        catch (StatusRuntimeException e) {
             e.printStackTrace();
         }
-        /* * * * * * * * * * testing the lock mechanism * * * * * * * * * */
 
-        // execute the TAKE operation
+        // phase 2: execute the operation and release the locks
         try {
-            for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server
+            for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to every server to execute the operation
                 this.stubs[i].take(serverRequest, new FrontendTakeObserver(i, currentRequestId, searchPattern, this.collector));
                 if (this.DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent TAKE request (#%d) to server %d\n", currentRequestId, i);
@@ -302,11 +266,8 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setResult(result)
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
-            if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE response (#%d) back to client\n", currentRequestId);
-            }
 
-            clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
+            clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response to the CLIENT
             
             TupleSpacesOuterClass.UnlockRequest unlockRequest = 
                                     TupleSpacesOuterClass.UnlockRequest
@@ -335,14 +296,14 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 e.printStackTrace();
             }
             
+            if (this.DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE response (#%d) back to client\n", currentRequestId);
+            }
+
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
         catch (StatusRuntimeException e) {
             e.printStackTrace();
-        }
-
-        if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend completed TAKE request (#%d)\n", currentRequestId);
         }
     }
 

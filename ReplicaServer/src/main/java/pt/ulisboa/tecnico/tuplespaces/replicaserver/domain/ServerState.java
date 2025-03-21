@@ -9,10 +9,10 @@ import java.util.LinkedList;
 public class ServerState {
 
     boolean DEBUG;
-    private List<String> tuples;    // tuple space
-    private boolean isLocked = false;      // Is the lock currently taken?
-    private int lockHolder = -1;           // Client ID holding the lock
-    private Queue<Integer> lockQueue = new LinkedList<>();  // Queue for pending lock requests
+    private List<String> tuples;                            // tuple space
+    private boolean lock = false;                           // server lock state for the TAKE operation
+    private int lockHolder = -1;                            // client ID holding the lock
+    private Queue<Integer> lockQueue = new LinkedList<>();  // queue for pending lock requests
 
 
     public ServerState(boolean debug) {
@@ -20,40 +20,64 @@ public class ServerState {
         this.tuples = new ArrayList<String>();
     }
 
-    public synchronized boolean requestLock(int clientId) {
-        if (!isLocked || (this.lockHolder == clientId)) {
-            this.isLocked = true;
-            this.lockHolder = clientId;
+    /**
+     * REQUEST-LOCK operation:  acquires the lock for a client
+     *                          if the lock is not available the client is added to the queue
+     *                          blocks the client until the lock is granted
+     *
+     * @param clientId the client ID
+     * @return true if the lock is granted to the client
+     */
+    public boolean acquireLock(int clientId) {
+        boolean inQueue = false;
 
-            if (DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d\n", clientId);
+        while (true) {
+            synchronized (this) {  // Only synchronize the critical section
+                if (!lock) {                        // lock is free when the queue is empty
+                    lock = true;                    // acquire the lock
+                    lockHolder = clientId;          // set the lock holder
+                    if (DEBUG) {
+                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d\n", clientId);
+                    }
+                    return true;
+                }
+                else if (lockHolder == clientId) {  // for when the lock gets passed to the next client in the queue
+                    if (DEBUG) {
+                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d (next in queue)\n", clientId);
+                    }
+                    return true;
+                }
+                else {
+                    if (!inQueue) {
+                        lockQueue.add(clientId);    // add client to the queue only once
+                        inQueue = true;
+                        if (DEBUG) {
+                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock request from client %d queued!\n", clientId);
+                        }
+                    }
+                    try {
+                        wait();                         // block
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
         }
-        else {
-            lockQueue.add(clientId);
-
-            if (DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock request from client %d queued!\n", clientId);
-            }
-        }
-        return this.isLocked;
     }
 
-    public synchronized void releaseLock() {
-        if (!lockQueue.isEmpty()) {
-            this.lockHolder = lockQueue.poll(); // still locked, but lock holder changes
-
-            if (DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Releasing lock! Lock granted to client %d\n", this.lockHolder);
-            }
+    /**
+     * REQUEST-UNLOCK operation:    releases the lock
+     */
+    public synchronized void freeLock() {
+        if (lockQueue.isEmpty()) {
+            this.lock = false;
+            this.lockHolder = -1;
+            // since the Queue is empty, no one is waiting for the lock
+            // so we don't need to notify anyone
         }
         else {
-            this.isLocked = false;
-            this.lockHolder = -1;
-
-            if (DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Releasing lock! Lock is now free");
-            }
+            this.lockHolder = lockQueue.poll();
+            notifyAll();    // notify the next client in the queue
         }
     }
 
