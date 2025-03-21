@@ -147,11 +147,11 @@ public class CommandProcessor {
 
     private void printUsage() {
         System.out.println("Usage:\n" +
-                "- put <element[,more_elements]>\n" +
-                "- read <element[,more_elements]>\n" +
-                "- take <element[,more_elements]>\n" +
-                "- getTupleSpacesState <server>\n" +
-                "- sleep <integer (seconds)>\n" +
+                "- put <element[,more_elements]> [<delayServer1(seconds)> <...> <delayServerN(seconds)>]\n" +
+                "- read <element[,more_elements]> [<delayS1(seconds)> <...> <delaySN(seconds)>]\n" +
+                "- take <element[,more_elements]> [<delayS1(seconds)> <...> <delaySN(seconds)>]\n" +
+                "- getTupleSpacesState\n" +
+                "- sleep <delay (seconds)>\n" +
                 "- exit\n");
     }
 

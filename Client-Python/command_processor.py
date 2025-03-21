@@ -106,11 +106,11 @@ class CommandProcessor:
 
     def print_usage(self):
         print("Usage:\n"
-              "- put <element[,more_elements]>\n"
-              "- read <element[,more_elements]>\n"
-              "- take <element[,more_elements]>\n"
+              "- put <element[,more_elements]> [<delayServer1(seconds)> <...> <delayServerN(seconds)>]\n"
+              "- read <element[,more_elements]> [<delayServer1(seconds)> <...> <delayServerN(seconds)>]\n"
+              "- take <element[,more_elements]> [<delayServer1(seconds)> <...> <delayServerN(seconds)>]\n"
               "- getTupleSpacesState\n"
-              "- sleep <integer (seconds)>\n"
+              "- sleep <delay (seconds)>\n"
               "- exit\n")
 
     def input_is_valid(self, input_data: List[str]) -> bool:
