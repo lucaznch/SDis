@@ -49,7 +49,8 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
      */
     @Override
     public void put(TupleSpacesOuterClass.PutRequest clientRequest, StreamObserver<TupleSpacesOuterClass.PutResponse> clientResponseObserver) {
-        String tuple = clientRequest.getNewTuple();             // get the tuple from the request sent by the CLIENT
+        String tuple = clientRequest.getNewTuple();                                 // get the tuple from the request sent by the CLIENT
+        String headerValue = HeaderServerInterceptor.HEADER_VALUE_CONTEXT_KEY.get();// get the header value from the context
 
         TupleSpacesOuterClass.PutRequest serverRequest = 
                                 TupleSpacesOuterClass.PutRequest
@@ -64,7 +65,12 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
 
         if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received PUT request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+            if (headerValue != null) {
+                System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received PUT request (#%d) from client in %s, with delay (%s), %s", currentRequestId, Thread.currentThread().getName(), headerValue, clientRequest);
+            }
+            else {
+                System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received PUT request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+            }
         }
 
         try {
@@ -113,6 +119,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     @Override
     public void read(TupleSpacesOuterClass.ReadRequest clientRequest, StreamObserver<TupleSpacesOuterClass.ReadResponse> clientResponseObserver) {
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
+        String headerValue = HeaderServerInterceptor.HEADER_VALUE_CONTEXT_KEY.get();// get the header value from the context
 
         TupleSpacesOuterClass.ReadRequest serverRequest =
                                 TupleSpacesOuterClass.ReadRequest
@@ -127,7 +134,12 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
 
         if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received READ request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+            if (headerValue != null) {
+                System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received READ request (#%d) from client in %s, with delay (%s), %s", currentRequestId, Thread.currentThread().getName(), headerValue, clientRequest);
+            }
+            else {
+                System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received READ request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+            }
         }
 
         try {
@@ -192,6 +204,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     public void take(TupleSpacesOuterClass.TakeRequest clientRequest, StreamObserver<TupleSpacesOuterClass.TakeResponse> clientResponseObserver) {
         int clientId = clientRequest.getClientId();             // get the client id from the request sent by the CLIENT
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
+        String headerValue = HeaderServerInterceptor.HEADER_VALUE_CONTEXT_KEY.get();// get the header value from the context
 
         TupleSpacesOuterClass.TakeRequest serverRequest =
                                 TupleSpacesOuterClass.TakeRequest
@@ -206,7 +219,12 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         }
 
         if (this.DEBUG) {
-            System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received \u001B[31mTAKE\u001B[0m request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+            if (headerValue != null) {
+                System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received TAKE request (#%d) from client in %s, with delay (%s), %s", currentRequestId, Thread.currentThread().getName(), headerValue, clientRequest);
+            }
+            else {
+                System.err.printf("\n[\u001B[34mDEBUG\u001B[0m] Frontend received \u001B[31mTAKE\u001B[0m request (#%d) from client in %s, %s", currentRequestId, Thread.currentThread().getName(), clientRequest);
+            }
         }
 
         // compute voter set

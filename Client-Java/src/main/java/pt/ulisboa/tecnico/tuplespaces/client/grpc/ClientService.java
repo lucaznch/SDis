@@ -7,6 +7,8 @@ import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,7 @@ public class ClientService {
     private final String host_port;
     private final ManagedChannel channel;
     private final TupleSpacesGrpc.TupleSpacesBlockingStub stub;
+    private final Metadata.Key<String> CUSTOM_HEADER_KEY = Metadata.Key.of("delay", Metadata.ASCII_STRING_MARSHALLER);
 
     public ClientService(String host_port, int client_id, boolean debug) {
         this.DEBUG = debug;
@@ -37,7 +40,7 @@ public class ClientService {
      * sends a PUT request to the server
      * @param tuple the tuple to put in the tuple space
      */
-    public void requestPut(String tuple) {
+    public void requestPut(String tuple, int[] delay) {
         TupleSpacesOuterClass.PutRequest request =
             TupleSpacesOuterClass.PutRequest
                                 .newBuilder()
@@ -49,7 +52,20 @@ public class ClientService {
         }
 
         try {
-            TupleSpacesOuterClass.PutResponse response = stub.put(request); // send the request to the server and get the response from it
+            TupleSpacesOuterClass.PutResponse response;
+
+            if (delay != null) {
+                String delayMetadata = delaysInString(delay);
+
+                Metadata metadata = new Metadata();
+                metadata.put(CUSTOM_HEADER_KEY, delayMetadata);
+
+                response = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata)).put(request); // send the request with metadata to the server and get the response from it
+            }
+            else {
+                response = stub.put(request);                                                                       // send the request to the server and get the response from it
+            }
+
             String result = response.getOk();
             System.out.println(result + "\n");
         }
@@ -65,7 +81,7 @@ public class ClientService {
      * @param pattern the pattern to search for in the tuple space
      * @return the tuple that matches the pattern
      */
-    public String requestRead(String pattern) {
+    public String requestRead(String pattern, int[] delay) {
         TupleSpacesOuterClass.ReadRequest request =
             TupleSpacesOuterClass.ReadRequest.newBuilder()
                                 .setSearchPattern(pattern)
@@ -76,7 +92,20 @@ public class ClientService {
         }
 
         try {
-            TupleSpacesOuterClass.ReadResponse response = stub.read(request);   // send the request to the server and get the response from it
+            TupleSpacesOuterClass.ReadResponse response;
+
+            if (delay != null) {
+                String delayMetadata = delaysInString(delay);
+
+                Metadata metadata = new Metadata();
+                metadata.put(CUSTOM_HEADER_KEY, delayMetadata);
+
+                response = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata)).read(request); // send the request with metadata to the server and get the response from it
+            }
+            else {
+                response = stub.read(request);                                                                       // send the request to the server and get the response from it
+            }
+
             System.out.println("OK");
             return response.getResult();
         }
@@ -93,7 +122,7 @@ public class ClientService {
      * @param pattern the pattern to search for in the tuple space
      * @return the tuple that matches the pattern
      */
-    public String requestTake(String pattern) {
+    public String requestTake(String pattern, int[] delay) {
         TupleSpacesOuterClass.TakeRequest request = 
             TupleSpacesOuterClass.TakeRequest
                                 .newBuilder()
@@ -106,7 +135,20 @@ public class ClientService {
         }
 
         try {
-            TupleSpacesOuterClass.TakeResponse response = stub.take(request);    // send the request to the server and get the response from it
+            TupleSpacesOuterClass.TakeResponse response;
+
+            if (delay != null) {
+                String delayMetadata = delaysInString(delay);
+
+                Metadata metadata = new Metadata();
+                metadata.put(CUSTOM_HEADER_KEY, delayMetadata);
+
+                response = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata)).take(request); // send the request with metadata to the server and get the response from it
+            }
+            else {
+                response = stub.take(request);                                                                       // send the request to the server and get the response from it
+            }
+
             System.out.println("OK");
             return response.getResult();
         }
@@ -159,4 +201,18 @@ public class ClientService {
     public void shutdown() {
         channel.shutdown();
     }
+
+
+    public String delaysInString(int[] delays) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < delays.length; i++) {
+            sb.append(delays[i]);
+            if (i < delays.length - 1) { sb.append(" "); }
+        }
+
+        return sb.toString();
+    }
+
 }
+

@@ -66,8 +66,32 @@ public class CommandProcessor {
         this.clientService.shutdown();
     }
 
-    private void put(String[] split){
+    private void put(String[] split) {
+        // check if input is valid
+        if (!this.inputIsValid(split)) {
+            this.printUsage();
+            return;
+        }
 
+        // get the tuple
+        String tuple = split[1];
+
+        if (split.length > 2) {
+            int[] delays = this.getIntegers(split);
+            if (delays == null) {
+                this.printUsage();
+                return;
+            }
+            // put the tuple with delays
+            this.clientService.requestPut(tuple, delays);
+        }
+        else {
+            // put the tuple
+            this.clientService.requestPut(tuple, null);
+        }
+    }
+
+    private void read(String[] split) {
         // check if input is valid
         if (!this.inputIsValid(split)) {
             this.printUsage();
@@ -77,26 +101,23 @@ public class CommandProcessor {
         // get the tuple
         String tuple = split[1];
 
-        // put the tuple
-        this.clientService.requestPut(tuple);
-    }
-
-    private void read(String[] split){
-        // check if input is valid
-        if (!this.inputIsValid(split)) {
-            this.printUsage();
-            return;
+        if (split.length > 2) {
+            int[] delays = this.getIntegers(split);
+            if (delays == null) {
+                this.printUsage();
+                return;
+            }
+            // read the tuple with delays
+            System.out.println(this.clientService.requestRead(tuple, delays) + "\n");
         }
-        
-        // get the tuple
-        String tuple = split[1];
-
-        // read the tuple
-        System.out.println(this.clientService.requestRead(tuple) + "\n");
+        else {
+            // read the tuple
+            System.out.println(this.clientService.requestRead(tuple, null) + "\n");
+        }
     }
 
 
-    private void take(String[] split){
+    private void take(String[] split) {
          // check if input is valid
         if (!this.inputIsValid(split)) {
             this.printUsage();
@@ -106,11 +127,22 @@ public class CommandProcessor {
         // get the tuple
         String tuple = split[1];
 
-        // take the tuple
-        System.out.println(this.clientService.requestTake(tuple) + "\n");
+        if (split.length > 2) {
+            int[] delays = this.getIntegers(split);
+            if (delays == null) {
+                this.printUsage();
+                return;
+            }
+            // take the tuple with delays
+            System.out.println(this.clientService.requestTake(tuple, delays) + "\n");
+        }
+        else {
+            // take the tuple
+            System.out.println(this.clientService.requestTake(tuple, null) + "\n");
+        }
     }
 
-    private void getTupleSpacesState(){
+    private void getTupleSpacesState() {
         // get the tuple spaces state
         List<String> tupleSpacesState = this.clientService.requestGetTupleSpacesState();
 
@@ -155,14 +187,33 @@ public class CommandProcessor {
                 "- exit\n");
     }
 
-    private boolean inputIsValid(String[] input){
+    private int[] getIntegers(String[] split) {
+        int[] integers = new int[3];
+
+        try {
+            integers[0] = Integer.parseInt(split[2]);
+            integers[1] = Integer.parseInt(split[3]);
+            integers[2] = Integer.parseInt(split[4]);
+
+            return integers;
+        }
+        catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private boolean inputIsValid(String[] input) {
         if (input.length < 2 
             ||
             !input[1].substring(0,1).equals(BGN_TUPLE) 
             || 
             !input[1].endsWith(END_TUPLE)
             || 
-            input.length > 2
+            input.length == 3
+            ||
+            input.length == 4
+            ||
+            input.length > 5
             ) {
             return false;
         }
@@ -171,3 +222,4 @@ public class CommandProcessor {
         }
     }
 }
+

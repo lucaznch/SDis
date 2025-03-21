@@ -2,6 +2,8 @@ package pt.ulisboa.tecnico.tuplespaces.frontend;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerInterceptors;
+
 import java.io.IOException;
 import java.lang.InterruptedException;
 
@@ -55,7 +57,7 @@ public class FrontendMain {
 
         // create a new gRPC server instance on the specified port for client communication
         Server server = ServerBuilder.forPort(port)
-                        .addService(new FrontendImpl(DEBUG, numServers, servers))
+                        .addService(ServerInterceptors.intercept(new FrontendImpl(DEBUG, numServers, servers), new HeaderServerInterceptor()))
                         .build();
 
         // start the server
