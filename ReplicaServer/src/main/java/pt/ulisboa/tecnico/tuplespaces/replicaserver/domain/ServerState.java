@@ -11,26 +11,16 @@ import java.util.HashMap;
 
 public class ServerState {
 
-    boolean DEBUG;
-    private List<String> tuples;                            // tuple space
-    
-    private Map<String, Integer> locks;                     // mapped lock for the TAKE operation
+    boolean DEBUG;    
+    private Map<String, Integer> locks;                     // tuple space with mapped lock for the TAKE operation
                                                             // locks={"<a,b>": -1, "<c,d>": 1, "<e,f>": -1, "<g,h>": 2, ...}
                                                             // key: tuple, value: N (lock status)
                                                             // N = -1 => the tuple is free
                                                             // N > 0  => the tuple is locked by client N
-    
-    
-    private boolean lock = false;                           // server lock state for the TAKE operation
-    private int lockHolder = -1;                            // client ID holding the lock
-    private Queue<Integer> lockQueue;  // queue for pending lock requests
 
 
     public ServerState(boolean debug) {
         this.DEBUG = debug;
-        this.tuples = new ArrayList<String>();
-        this.lockQueue = new LinkedList<Integer>();
-
         this.locks = new HashMap<String, Integer>();
     }
 
@@ -38,25 +28,21 @@ public class ServerState {
      * REQUEST-LOCK operation:  tries to acquire the lock(s) for a client
      *
      * @param clientId the client ID
-     * @param pattern the pattern to match or the tuple to match
+     * @param pattern the pattern to match. the pattern may be a regular expression or a simple tuple
      * @return true if the lock is granted to the client
      */
     public List<String> acquireLock(int clientId, String pattern) {
 
         while (true) {
-            synchronized (this) {  // Only synchronize the critical section
+            synchronized (this) {
                 
-                // TODO: what if we verify if the pattern is a regular expression?
-                // if not, we return the list with the first tuple that matches the pattern
-                // if the pattern is a regular expression, we return the list with all tuples that match the pattern
-
                 List<String> matches = new ArrayList<String>(); // list of tuples that match the pattern
                 
                 for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {    // iterate over the tuple space
-                    if (entry.getKey().matches(pattern)) {  // if the tuple matches the pattern
-                        if (entry.getValue() == -1 || entry.getValue() == clientId) {       // if the tuple is free or if the tuple is locked, but it's locked by the client
-                            entry.setValue(clientId);      // lock the tuple for the client
-                            matches.add(entry.getKey());   // add the tuple to the list of matches
+                    if (entry.getKey().matches(pattern)) {                              // if the tuple matches the pattern
+                        if (entry.getValue() == -1 || entry.getValue() == clientId) {   // if the tuple is free or if the tuple is locked, but it's locked by the client
+                            entry.setValue(clientId);       // lock the tuple for the client
+                            matches.add(entry.getKey());    // add the tuple to the list of matches
                             if (DEBUG) {
                                 System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d for tuple %s\n", clientId, entry.getKey());
                             }
@@ -72,20 +58,19 @@ public class ServerState {
                     }
                 }
 
-                if (matches.isEmpty()) { // MISS: the client didn't get any locks, i.e., there are no matching tuples
+                if (matches.isEmpty()) {    // MISS: the client didn't get any locks, i.e., there are no matching tuples
                     if (DEBUG) {
-                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] No tuples found for client %d with pattern %s. Block until a tuple is added\n", clientId, pattern);
+                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] MISS: No tuples found for client %d with pattern %s. Block until a tuple is added\n", clientId, pattern);
                     }
                     try {
-                        wait(); // block until a tuple is added
+                        wait();             // block until a tuple is added
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                 }
-                else { // HIT: the client got successfully locks for the tuples
+                else {                      // HIT: the client got successfully locks for the tuples
                     if (DEBUG) {
-                        // for debugging purposes, print the hashmap of locks
-                        System.err.println("[\u001B[34mDEBUG\u001B[0m] Locks: " + this.locks);
+                        System.err.println("[\u001B[34mDEBUG\u001B[0m] HIT: " + this.locks);
                     }
                     return matches; // return the list of tuples that match the pattern
                 }
@@ -95,13 +80,13 @@ public class ServerState {
 
     /**
      * REQUEST-UNLOCK operation:    releases the lock(s) for a client
+     * 
+     * @param clientId the client ID
      */
     public synchronized void freeLock(int clientId) {
         
         if (DEBUG) {
-            // for debugging purposes, print the hashmap of locks and the client ID
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Freeing lock for client %d\n", clientId);
-            System.err.println("[\u001B[34mDEBUG\u001B[0m] Locks: " + this.locks);
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Freeing possible locks for client %d\n", clientId);
         }
 
         for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {    // iterate over the tuple space
@@ -119,7 +104,6 @@ public class ServerState {
      * @param tuple the tuple to be added
      */
     public synchronized void put(String tuple) {
-        this.tuples.add(tuple);
         this.locks.put(tuple, -1);
 
         if (DEBUG) {
@@ -135,11 +119,10 @@ public class ServerState {
      * @return the tuple that matches the pattern
      */
     private String getMatchingTuple(String pattern) {
-        for (String tuple : this.tuples) {
-            if (tuple.matches(pattern)) {
-                return tuple;
-            }
+        for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {
+            if (entry.getKey().matches(pattern)) { return entry.getKey(); }
         }
+
         return null;
     }
 
@@ -185,7 +168,6 @@ public class ServerState {
         while (true) {
             String t = getMatchingTuple(pattern);
             if (t != null) {
-                this.tuples.remove(t);
                 this.locks.remove(t);
 
                 if (DEBUG) {
@@ -213,7 +195,7 @@ public class ServerState {
      */
     public synchronized List<String> getTupleSpacesState() {
 
-        List<String> tupleSpacesState = new ArrayList<String>(this.tuples);
+        List<String> tupleSpacesState = new ArrayList<String>(this.locks.keySet());
 
         if (DEBUG) {
             System.err.println("[\u001B[34mDEBUG\u001B[0m] Got tuple space state");
