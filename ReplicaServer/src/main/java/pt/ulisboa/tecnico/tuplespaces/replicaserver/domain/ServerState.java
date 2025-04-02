@@ -54,7 +54,7 @@ public class ServerState {
                 
                 for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {    // iterate over the tuple space
                     if (entry.getKey().matches(pattern)) {  // if the tuple matches the pattern
-                        if (entry.getValue() == -1) {       // if the tuple is free
+                        if (entry.getValue() == -1 || entry.getValue() == clientId) {       // if the tuple is free or if the tuple is locked, but it's locked by the client
                             entry.setValue(clientId);      // lock the tuple for the client
                             matches.add(entry.getKey());   // add the tuple to the list of matches
                             if (DEBUG) {
