@@ -17,11 +17,13 @@ public class ResponseCollector {
                                                                 // |     PUT     |     1     |   ...   |   ...    |    2     |
 
     private ArrayList<ResponseLockEntry> collectedLockHistory;  // table with all the LOCK/UNLOCK responses received from the servers
-                                                                // | requestType | requestId | request | response | serverId |
-                                                                // |     LOCK    |     1     |   ...   |   ...    |    0     |
-                                                                // |     LOCK    |     1     |   ...   |   ...    |    2     |
-                                                                // |    UNLOCK   |     1     |   ...   |   ...    |    0     |
-                                                                // |    UNLOCK   |     1     |   ...   |   ...    |    2     |
+                                                                // | requestType | requestId | request | response | serverId | retryId |
+                                                                // |     LOCK    |     1     |   ...   |   ...    |    0     |    0    |
+                                                                // |     LOCK    |     1     |   ...   |   ...    |    2     |    0    |
+                                                                // |     LOCK    |     1     |   ...   |   ...    |    0     |    1    |
+                                                                // |     LOCK    |     1     |   ...   |   ...    |    2     |    1    |
+                                                                // |    UNLOCK   |     1     |   ...   |   ...    |    0     |    1    |
+                                                                // |    UNLOCK   |     1     |   ...   |   ...    |    2     |    1    |
 
     private ArrayList<ResponseGetEntry> collectedGetHistory;    // table with all the GET responses received from the servers
                                                                 // | requestId |    response    | serverId |
@@ -135,8 +137,8 @@ public class ResponseCollector {
      * @param response the response
      * @param serverId the server ID
      */
-    public synchronized void addLockResponse(String requestType, int requestId, String request, List<String> response, int serverId) {
-        this.collectedLockHistory.add(new ResponseLockEntry(requestType, requestId, request, response, serverId));
+    public synchronized void addLockResponse(String requestType, int requestId, String request, List<String> response, int serverId, int retryId) {
+        this.collectedLockHistory.add(new ResponseLockEntry(requestType, requestId, request, response, serverId, retryId));
         notifyAll();
     }
 

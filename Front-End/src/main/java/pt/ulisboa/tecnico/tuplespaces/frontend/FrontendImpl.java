@@ -260,11 +260,13 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setSearchPattern(searchPattern)
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
+        int retryCount = 0; // also represents the retry ID
+
         // phase 1: acquire the locks
         try {
             for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
                 if (i == voterOne || i == voterTwo) {
-                    this.stubs[i].requestLock(lockRequest, new FrontendLockObserver(i, currentRequestId, searchPattern, this.collector));
+                    this.stubs[i].requestLock(lockRequest, new FrontendLockObserver(i, currentRequestId, searchPattern, retryCount, this.collector));
                     if (this.DEBUG) {
                         System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent LOCK request (#%d) to server %d\n", currentRequestId, i);
                     }
@@ -352,7 +354,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             try {
                 for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
                     if (i == voterOne || i == voterTwo) {
-                        this.stubs[i].releaseLock(unlockRequest, new FrontendUnlockObserver(i, currentRequestId, searchPattern, this.collector));
+                        this.stubs[i].releaseLock(unlockRequest, new FrontendUnlockObserver(i, currentRequestId, searchPattern, retryCount, this.collector));
                         if (this.DEBUG) {
                             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent UNLOCK request (#%d) to server %d\n", currentRequestId, i);
                         }

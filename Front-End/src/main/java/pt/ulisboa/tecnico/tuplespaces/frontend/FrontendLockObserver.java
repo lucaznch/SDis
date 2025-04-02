@@ -14,12 +14,14 @@ public class FrontendLockObserver implements StreamObserver<TupleSpacesOuterClas
     private final int serverId;
     private final int requestId;
     private final String request;
+    private final int retryId;
     private ResponseCollector collector;
 
-    public FrontendLockObserver(int serverId, int requestId, String request, ResponseCollector c) {
+    public FrontendLockObserver(int serverId, int requestId, String request, int retryId, ResponseCollector c) {
         this.serverId = serverId;
         this.requestId = requestId;
         this.request = request;
+        this.retryId = retryId;
         this.collector = c;
     }
 
@@ -29,7 +31,7 @@ public class FrontendLockObserver implements StreamObserver<TupleSpacesOuterClas
         List<String> matches = new ArrayList<String>();
         for (int i = 0; i < len; i++) { matches.add(response.getMatch(i)); }
 
-        collector.addLockResponse("LOCK", this.requestId, this.request, matches, this.serverId);
+        collector.addLockResponse("LOCK", this.requestId, this.request, matches, this.serverId, this.retryId);
     }
 
     @Override

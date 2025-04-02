@@ -15,18 +15,20 @@ public class FrontendUnlockObserver implements StreamObserver<TupleSpacesOuterCl
     private final int serverId;
     private final int requestId;
     private final String request;
+    private final int retryId;
     private ResponseCollector collector;
 
-    public FrontendUnlockObserver(int serverId, int requestId, String request, ResponseCollector c) {
+    public FrontendUnlockObserver(int serverId, int requestId, String request, int retryId, ResponseCollector c) {
         this.serverId = serverId;
         this.requestId = requestId;
         this.request = request;
+        this.retryId = retryId;
         this.collector = c;
     }
 
     @Override
     public void onNext(TupleSpacesOuterClass.UnlockResponse response) {
-        collector.addLockResponse("UNLOCK", this.requestId, this.request, null, this.serverId);
+        collector.addLockResponse("UNLOCK", this.requestId, this.request, null, this.serverId, this.retryId);
     }
 
     @Override
