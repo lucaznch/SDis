@@ -18,9 +18,10 @@ message ReadResponse {
 
 message LockRequest {
   int32 clientId = 1;
+  string searchPattern = 2;
 }
 message LockResponse {
-  bool granted = 1;
+  repeated string match = 1;
 }
 
 message UnlockRequest {

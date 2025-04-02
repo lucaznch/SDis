@@ -263,6 +263,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                 TupleSpacesOuterClass.LockRequest
                                                     .newBuilder()
                                                     .setClientId(clientId)
+                                                    .setSearchPattern(searchPattern)
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
         // phase 1: acquire the locks

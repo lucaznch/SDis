@@ -26,8 +26,7 @@ public class FrontendUnlockObserver implements StreamObserver<TupleSpacesOuterCl
 
     @Override
     public void onNext(TupleSpacesOuterClass.UnlockResponse response) {
-        collector.addLockResponse("UNLOCK", this.requestId, this.request, true, this.serverId);
-        //System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendUnlockObserver: received UNLOCK response (#%d) from server %d\n", this.requestId, this.serverId);
+        collector.addLockResponse("UNLOCK", this.requestId, this.request, null, this.serverId);
     }
 
     @Override

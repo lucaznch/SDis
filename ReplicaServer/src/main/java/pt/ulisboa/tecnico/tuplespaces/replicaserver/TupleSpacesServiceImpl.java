@@ -7,6 +7,7 @@ import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 import pt.ulisboa.tecnico.tuplespaces.replicaserver.domain.ServerState;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Random;
 
 import io.grpc.stub.StreamObserver;
@@ -153,19 +154,27 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     @Override
     public void requestLock(TupleSpacesOuterClass.LockRequest request, StreamObserver<TupleSpacesOuterClass.LockResponse> responseObserver) {
         int clientId = request.getClientId();
+        String pattern = request.getSearchPattern();    // server now receives the tuple/pattern to look for
 
         if (this.DEBUG) {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received LOCK request in %s, %s", Thread.currentThread().getName(), request);
         }
 
+        /* *********** TODO: implement serverState.acquireLock to return List *********** */
+
         boolean granted = serverState.acquireLock(clientId);    // acquire lock at any cost
 
-        // Send response
-        TupleSpacesOuterClass.LockResponse response =
+        /* *********** TODO: implement serverState.acquireLock to return List *********** */
+        List<String> mock = new ArrayList<>();
+        mock.add("<this,is,a,mock,tuple>");
+        mock.add("<this,is,another,mock,tuple>");
+
+        TupleSpacesOuterClass.LockResponse.Builder responseBuilder = 
             TupleSpacesOuterClass.LockResponse
-                                .newBuilder()
-                                .setGranted(granted)
-                                .build();
+                                .newBuilder();
+        for (String t : mock) { responseBuilder.addMatch(t); }
+
+        TupleSpacesOuterClass.LockResponse response = responseBuilder.build();
         
         responseObserver.onNext(response);
         responseObserver.onCompleted();

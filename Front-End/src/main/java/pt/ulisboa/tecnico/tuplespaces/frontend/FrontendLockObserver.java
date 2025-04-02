@@ -6,6 +6,8 @@ import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 
 import io.grpc.stub.StreamObserver;
 
+import java.util.List;
+import java.util.ArrayList;
 
 
 public class FrontendLockObserver implements StreamObserver<TupleSpacesOuterClass.LockResponse> {
@@ -23,8 +25,11 @@ public class FrontendLockObserver implements StreamObserver<TupleSpacesOuterClas
 
     @Override
     public void onNext(TupleSpacesOuterClass.LockResponse response) {
-        collector.addLockResponse("LOCK", this.requestId, this.request, response.getGranted(), this.serverId);
-        // System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendLockObserver: received LOCK response (#%d) from server %d: %s\n", this.requestId, this.serverId, response.getGranted());
+        int len = response.getMatchCount();
+        List<String> matches = new ArrayList<String>();
+        for (int i = 0; i < len; i++) { matches.add(response.getMatch(i)); }
+
+        collector.addLockResponse("LOCK", this.requestId, this.request, matches, this.serverId);
     }
 
     @Override

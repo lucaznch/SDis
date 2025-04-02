@@ -135,7 +135,7 @@ public class ResponseCollector {
      * @param response the response
      * @param serverId the server ID
      */
-    public synchronized void addLockResponse(String requestType, int requestId, String request, boolean response, int serverId) {
+    public synchronized void addLockResponse(String requestType, int requestId, String request, List<String> response, int serverId) {
         this.collectedLockHistory.add(new ResponseLockEntry(requestType, requestId, request, response, serverId));
         notifyAll();
     }
@@ -148,16 +148,13 @@ public class ResponseCollector {
      * @param serverId the server ID
      * @return the lock response for the given request ID
      */
-    public synchronized boolean getLockResponse(int requestId, int serverId) {
-        int requestsCounter = 0;
-
+    public synchronized List<String> getLockResponse(int requestId, int serverId) {
         for (ResponseLockEntry e : this.collectedLockHistory) {
             if (e.getRequestId() == requestId && e.getServerId() == serverId) {
                 return e.getResponse();
             }
         }
-
-        return false;
+        return null;
     }
 
     /**
