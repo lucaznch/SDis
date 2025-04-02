@@ -1,7 +1,7 @@
 package pt.ulisboa.tecnico.tuplespaces.replicaserver.domain;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Queue;
 import java.util.LinkedList;
 
@@ -35,63 +35,82 @@ public class ServerState {
     }
 
     /**
-     * REQUEST-LOCK operation:  acquires the lock for a client
-     *                          if the lock is not available the client is added to the queue
-     *                          blocks the client until the lock is granted
+     * REQUEST-LOCK operation:  tries to acquire the lock(s) for a client
      *
      * @param clientId the client ID
+     * @param pattern the pattern to match or the tuple to match
      * @return true if the lock is granted to the client
      */
-    public boolean acquireLock(int clientId) {
-        boolean inQueue = false;
+    public List<String> acquireLock(int clientId, String pattern) {
 
         while (true) {
             synchronized (this) {  // Only synchronize the critical section
-                if (!lock) {                        // lock is free when the queue is empty
-                    lock = true;                    // acquire the lock
-                    lockHolder = clientId;          // set the lock holder
-                    if (DEBUG) {
-                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d\n", clientId);
-                    }
-                    return true;
-                }
-                else if (lockHolder == clientId) {  // for when the lock gets passed to the next client in the queue
-                    if (DEBUG) {
-                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d (next in queue)\n", clientId);
-                    }
-                    return true;
-                }
-                else {
-                    if (!inQueue) {
-                        lockQueue.add(clientId);    // add client to the queue only once
-                        inQueue = true;
-                        if (DEBUG) {
-                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock request from client %d queued!\n", clientId);
+                
+                // TODO: what if we verify if the pattern is a regular expression?
+                // if not, we return the list with the first tuple that matches the pattern
+                // if the pattern is a regular expression, we return the list with all tuples that match the pattern
+
+                List<String> matches = new ArrayList<String>(); // list of tuples that match the pattern
+                
+                for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {    // iterate over the tuple space
+                    if (entry.getKey().matches(pattern)) {  // if the tuple matches the pattern
+                        if (entry.getValue() == -1) {       // if the tuple is free
+                            entry.setValue(clientId);      // lock the tuple for the client
+                            matches.add(entry.getKey());   // add the tuple to the list of matches
+                            if (DEBUG) {
+                                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock granted to client %d for tuple %s\n", clientId, entry.getKey());
+                            }
+                        }
+                        else {
+                            // if the tuple matches the pattern but is locked by another client
+                            // Xu Liskov algorithm: return unsuccessful (empty list) to force the client to retry
+                            if (DEBUG) {
+                                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock denied to client %d for tuple %s - client needs to retry\n", clientId, entry.getKey());
+                            }
+                            return new ArrayList<String>(); // return empty list
                         }
                     }
+                }
+
+                if (matches.isEmpty()) { // MISS: the client didn't get any locks, i.e., there are no matching tuples
+                    if (DEBUG) {
+                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] No tuples found for client %d with pattern %s. Block until a tuple is added\n", clientId, pattern);
+                    }
                     try {
-                        wait();                         // block
+                        wait(); // block until a tuple is added
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
+                }
+                else { // HIT: the client got successfully locks for the tuples
+                    if (DEBUG) {
+                        // for debugging purposes, print the hashmap of locks
+                        System.err.println("[\u001B[34mDEBUG\u001B[0m] Locks: " + this.locks);
+                    }
+                    return matches; // return the list of tuples that match the pattern
                 }
             }
         }
     }
 
     /**
-     * REQUEST-UNLOCK operation:    releases the lock
+     * REQUEST-UNLOCK operation:    releases the lock(s) for a client
      */
-    public synchronized void freeLock() {
-        if (lockQueue.isEmpty()) {
-            this.lock = false;
-            this.lockHolder = -1;
-            // since the Queue is empty, no one is waiting for the lock
-            // so we don't need to notify anyone
+    public synchronized void freeLock(int clientId) {
+        
+        if (DEBUG) {
+            // for debugging purposes, print the hashmap of locks and the client ID
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Freeing lock for client %d\n", clientId);
+            System.err.println("[\u001B[34mDEBUG\u001B[0m] Locks: " + this.locks);
         }
-        else {
-            this.lockHolder = lockQueue.poll();
-            notifyAll();    // notify the next client in the queue
+
+        for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {    // iterate over the tuple space
+            if (entry.getValue() == clientId) {       // if the tuple is locked by the client
+                entry.setValue(-1);                   // unlock the tuple for the client
+                if (DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock released for client %d for tuple %s\n", clientId, entry.getKey());
+                }
+            }
         }
     }
 

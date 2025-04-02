@@ -231,12 +231,6 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         String searchPattern = clientRequest.getSearchPattern();// get the search pattern from the request sent by the CLIENT
         String headerValue = HeaderServerInterceptor.HEADER_VALUE_CONTEXT_KEY.get();// get the header value from the context
 
-        TupleSpacesOuterClass.TakeRequest serverRequest =
-                                TupleSpacesOuterClass.TakeRequest
-                                                    .newBuilder()
-                                                    .setSearchPattern(searchPattern)
-                                                    .build();   // construct a new Protobuffer object to send as request to the SERVER
-
         int currentRequestId;
         synchronized (this) {
             currentRequestId = this.requestId;
@@ -281,15 +275,35 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
             if (this.DEBUG) {
                 System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses (#%d) from both servers\n", currentRequestId);
-
-                // for debugging purposes only: print the responses from the 2 servers
-                this.collector.getLockResponse(currentRequestId, voterOne);
-                this.collector.getLockResponse(currentRequestId, voterTwo);
             }
         }
         catch (StatusRuntimeException e) {
             e.printStackTrace();
         }
+
+        List<String> lockResponseVoterOne = this.collector.getLockResponse(currentRequestId, voterOne);
+        List<String> lockResponseVoterTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
+        if (this.DEBUG) {
+            // for debugging purposes only: print the responses from the 2 servers
+            System.err.printf("server %d\n", voterOne);
+            for (String t: lockResponseVoterOne) {
+                System.err.printf("%s\n", t);
+            }
+            System.err.printf("server %d\n", voterTwo);
+            for (String t: lockResponseVoterTwo) {
+                System.err.printf("%s\n", t);
+            }
+        }
+
+        // we are not yet dealing with regular expressions, so we can just take the first element of the list
+        String commonResult = lockResponseVoterOne.get(0);
+
+        TupleSpacesOuterClass.TakeRequest serverRequest =
+                                TupleSpacesOuterClass.TakeRequest
+                                                    .newBuilder()
+                                                    .setSearchPattern(commonResult)
+                                                    .build();   // construct a new Protobuffer object to send as request to the SERVER
+
 
         // phase 2: execute the operation and release the locks
         try {

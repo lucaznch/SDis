@@ -160,22 +160,20 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received LOCK request in %s, %s", Thread.currentThread().getName(), request);
         }
 
-        /* *********** TODO: implement serverState.acquireLock to return List *********** */
-
-        boolean granted = serverState.acquireLock(clientId);    // acquire lock at any cost
-
-        /* *********** TODO: implement serverState.acquireLock to return List *********** */
-        List<String> mock = new ArrayList<>();
-        mock.add("<this,is,a,mock,tuple>");
-        mock.add("<this,is,another,mock,tuple>");
+        List<String> matches = serverState.acquireLock(clientId, pattern);    // acquire lock at any cost
 
         TupleSpacesOuterClass.LockResponse.Builder responseBuilder = 
             TupleSpacesOuterClass.LockResponse
                                 .newBuilder();
-        for (String t : mock) { responseBuilder.addMatch(t); }
+
+        for (String t : matches) { responseBuilder.addMatch(t); }
 
         TupleSpacesOuterClass.LockResponse response = responseBuilder.build();
         
+        if (this.DEBUG) {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending LOCK response in %s, %s\n\n", Thread.currentThread().getName(), matches);
+        }
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -186,14 +184,20 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received UNLOCK request in %s, %s", Thread.currentThread().getName(), request);
         }
 
-        this.serverState.freeLock();
+        int clientId = request.getClientId();
+
+        this.serverState.freeLock(clientId);
 
         // Send response
         TupleSpacesOuterClass.UnlockResponse response =
             TupleSpacesOuterClass.UnlockResponse
                                 .newBuilder()
                                 .build();
-        
+
+        if (this.DEBUG) {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending UNLOCK response in %s, OK\n\n", Thread.currentThread().getName());
+        }        
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
