@@ -161,18 +161,19 @@ public class ResponseCollector {
     }
 
     /**
-     * this method is used to wait until all the lock responses for a given request ID are received.
+     * this method is used to wait until all the lock responses for a given request ID and retry ID are received.
      * @param requestId the request ID to wait for
+     * @param retryId the retry ID to wait for
      * @param requestType the type of the request (LOCK, UNLOCK)
      */
-    public synchronized void waitUntilAllLockReceived(int requestId, String requestType) {
+    public synchronized void waitUntilAllLockReceived(int requestId, int retryId, String requestType) {
         int requestsCounter;
 
         while (true) {
             requestsCounter = 0;
 
             for (ResponseLockEntry e : this.collectedLockHistory) {
-                if (e.getRequestId() == requestId && e.getRequestType().equals(requestType)) {
+                if (e.getRequestId() == requestId && e.getRetryId() == retryId && e.getRequestType().equals(requestType)) {
                     requestsCounter++;
                     if (requestsCounter == 2) { return; }
                 }

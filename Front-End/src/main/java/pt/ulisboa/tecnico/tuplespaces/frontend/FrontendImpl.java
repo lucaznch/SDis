@@ -273,7 +273,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                 }
             }
 
-            this.collector.waitUntilAllLockReceived(currentRequestId, "LOCK");
+            this.collector.waitUntilAllLockReceived(currentRequestId, retryCount, "LOCK");
 
             if (this.DEBUG) {
                 System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses (#%d) from both servers\n", currentRequestId);
@@ -361,7 +361,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                     }
                 }
 
-                this.collector.waitUntilAllLockReceived(currentRequestId, "UNLOCK");
+                this.collector.waitUntilAllLockReceived(currentRequestId, retryCount, "UNLOCK");
 
                 if (this.DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received UNLOCK responses (#%d) from both servers\n", currentRequestId);
