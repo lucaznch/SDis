@@ -151,6 +151,7 @@ public class ResponseCollector {
     public synchronized List<String> getLockResponse(int requestId, int serverId) {
         for (ResponseLockEntry e : this.collectedLockHistory) {
             if (e.getRequestId() == requestId && e.getServerId() == serverId) {
+                System.err.println("[\u001B[34mDEBUG\u001B[0m] entry = " + e.toString());
                 return e.getResponse();
             }
         }

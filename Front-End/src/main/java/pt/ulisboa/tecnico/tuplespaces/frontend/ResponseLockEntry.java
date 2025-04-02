@@ -26,6 +26,11 @@ public class ResponseLockEntry {
     public List<String> getResponse() { return response; }
 
     public int getServerId() { return serverId; }
+
+    @Override
+    public String toString() {
+        return String.format("(%s, %d, %s, %s, %d)", requestType, requestId, request, response, serverId);
+    }
 }
 
 

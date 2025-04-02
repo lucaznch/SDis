@@ -281,6 +281,10 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
             if (this.DEBUG) {
                 System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses (#%d) from both servers\n", currentRequestId);
+
+                // for debugging purposes only: print the responses from the 2 servers
+                this.collector.getLockResponse(currentRequestId, voterOne);
+                this.collector.getLockResponse(currentRequestId, voterTwo);
             }
         }
         catch (StatusRuntimeException e) {
