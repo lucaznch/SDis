@@ -13,6 +13,8 @@ import io.grpc.stub.MetadataUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 
 public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
@@ -283,22 +285,77 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
             e.printStackTrace();
         }
 
-        List<String> lockResponseVoterOne = this.collector.getLockResponse(currentRequestId, voterOne);
-        List<String> lockResponseVoterTwo = this.collector.getLockResponse(currentRequestId, voterTwo);
-        if (this.DEBUG) {
-            // for debugging purposes only: print the responses from the 2 servers
-            System.err.printf("server %d\n", voterOne);
-            for (String t: lockResponseVoterOne) {
-                System.err.printf("%s\n", t);
-            }
-            System.err.printf("server %d\n", voterTwo);
-            for (String t: lockResponseVoterTwo) {
-                System.err.printf("%s\n", t);
-            }
+        // phase 1.1: determine the intersection of the two lock responses
+        List<String> lockResponseVoterOne = this.collector.getLockResponse(currentRequestId, voterOne, retryCount);
+        List<String> lockResponseVoterTwo = this.collector.getLockResponse(currentRequestId, voterTwo, retryCount);
+
+        Set<String> setVoterTwo = new HashSet<>(lockResponseVoterTwo); // convert the list to a set for faster lookup
+        List<String> intersection = new ArrayList<>();
+
+        for (String tuple : lockResponseVoterOne) {
+            if (setVoterTwo.contains(tuple)) { intersection.add(tuple); }
         }
 
-        // we are not yet dealing with regular expressions, so we can just take the first element of the list
-        String commonResult = lockResponseVoterOne.get(0);
+        if (this.DEBUG) {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend computed intersection (#%d) - %s\n", currentRequestId, intersection);
+        }
+
+        // phase 1.2: verify if the intersection is empty and act accordingly
+        if (intersection.isEmpty()) {
+            if (this.DEBUG) {
+                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Intersection is empty (#%d) - Retrying...\n", currentRequestId);
+            }
+
+            while (intersection.isEmpty()) {
+
+                try {
+                    Thread.sleep(5000); // wait for 5 seconds before retrying
+                }
+                catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                
+                retryCount++;
+
+                // repeat phase 1: acquire the locks
+                try {
+                    for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
+                        if (i == voterOne || i == voterTwo) {
+                            this.stubs[i].requestLock(lockRequest, new FrontendLockObserver(i, currentRequestId, searchPattern, retryCount, this.collector));
+                            if (this.DEBUG) {
+                                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent LOCK request again (#%d) to server %d\n", currentRequestId, i);
+                            }
+                        }
+                    }
+
+                    this.collector.waitUntilAllLockReceived(currentRequestId, retryCount, "LOCK");
+
+                    if (this.DEBUG) {
+                        System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received LOCK responses (#%d) from both servers\n", currentRequestId);
+                    }
+                }
+                catch (StatusRuntimeException e) {
+                    e.printStackTrace();
+                }
+
+                // repeat phase 1.1: determine the intersection of the two lock responses
+                lockResponseVoterOne = this.collector.getLockResponse(currentRequestId, voterOne, retryCount);
+                lockResponseVoterTwo = this.collector.getLockResponse(currentRequestId, voterTwo, retryCount);
+
+                setVoterTwo = new HashSet<>(lockResponseVoterTwo); // convert the list to a set for faster lookup
+                intersection = new ArrayList<>();
+
+                for (String tuple : lockResponseVoterOne) {
+                    if (setVoterTwo.contains(tuple)) { intersection.add(tuple); }
+                }
+                if (this.DEBUG) {
+                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend computed intersection (#%d) - %s\n", currentRequestId, intersection);
+                }
+            }
+
+        }
+
+        String commonResult = intersection.get(0);
 
         TupleSpacesOuterClass.TakeRequest serverRequest =
                                 TupleSpacesOuterClass.TakeRequest
