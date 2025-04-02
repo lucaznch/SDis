@@ -169,8 +169,6 @@ public class ResponseCollector {
     public synchronized void waitUntilAllLockReceived(int requestId, int retryId, String requestType) {
         int requestsCounter;
 
-        System.err.println("[\u001B[34mDEBUG\u001B[0m] waiting for all LOCK responses for request ID " + requestId + " and retry ID " + retryId);
-
         while (true) {
             requestsCounter = 0;
 
