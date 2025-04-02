@@ -5,19 +5,33 @@ import java.util.List;
 import java.util.Queue;
 import java.util.LinkedList;
 
+import java.util.Map;
+import java.util.HashMap;
+
 
 public class ServerState {
 
     boolean DEBUG;
     private List<String> tuples;                            // tuple space
+    
+    private Map<String, Integer> locks;                     // mapped lock for the TAKE operation
+                                                            // locks={"<a,b>": -1, "<c,d>": 1, "<e,f>": -1, "<g,h>": 2, ...}
+                                                            // key: tuple, value: N (lock status)
+                                                            // N = -1 => the tuple is free
+                                                            // N > 0  => the tuple is locked by client N
+    
+    
     private boolean lock = false;                           // server lock state for the TAKE operation
     private int lockHolder = -1;                            // client ID holding the lock
-    private Queue<Integer> lockQueue = new LinkedList<>();  // queue for pending lock requests
+    private Queue<Integer> lockQueue;  // queue for pending lock requests
 
 
     public ServerState(boolean debug) {
         this.DEBUG = debug;
         this.tuples = new ArrayList<String>();
+        this.lockQueue = new LinkedList<Integer>();
+
+        this.locks = new HashMap<String, Integer>();
     }
 
     /**
@@ -87,6 +101,7 @@ public class ServerState {
      */
     public synchronized void put(String tuple) {
         this.tuples.add(tuple);
+        this.locks.put(tuple, -1);
 
         if (DEBUG) {
             System.err.println("[\u001B[34mDEBUG\u001B[0m] Added tuple: " + tuple);
@@ -152,6 +167,7 @@ public class ServerState {
             String t = getMatchingTuple(pattern);
             if (t != null) {
                 this.tuples.remove(t);
+                this.locks.remove(t);
 
                 if (DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Took tuple %s for pattern: %s%n", t, pattern);
