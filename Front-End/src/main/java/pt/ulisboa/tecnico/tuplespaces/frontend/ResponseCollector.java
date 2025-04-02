@@ -150,9 +150,9 @@ public class ResponseCollector {
      * @param serverId the server ID
      * @return the lock response for the given request ID
      */
-    public synchronized List<String> getLockResponse(int requestId, int serverId) {
+    public synchronized List<String> getLockResponse(int requestId, int serverId, int retryId) {
         for (ResponseLockEntry e : this.collectedLockHistory) {
-            if (e.getRequestId() == requestId && e.getServerId() == serverId) {
+            if (e.getRequestId() == requestId && e.getServerId() == serverId && e.getRetryId() == retryId) {
                 System.err.println("[\u001B[34mDEBUG\u001B[0m] entry = " + e.toString());
                 return e.getResponse();
             }
@@ -168,6 +168,8 @@ public class ResponseCollector {
      */
     public synchronized void waitUntilAllLockReceived(int requestId, int retryId, String requestType) {
         int requestsCounter;
+
+        System.err.println("[\u001B[34mDEBUG\u001B[0m] waiting for all LOCK responses for request ID " + requestId + " and retry ID " + retryId);
 
         while (true) {
             requestsCounter = 0;
