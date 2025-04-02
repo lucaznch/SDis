@@ -12,8 +12,8 @@ import java.util.HashMap;
 public class ServerState {
 
     boolean DEBUG;    
-    private Map<String, Integer> locks;                     // tuple space with mapped lock for the TAKE operation
-                                                            // locks={"<a,b>": -1, "<c,d>": 1, "<e,f>": -1, "<g,h>": 2, ...}
+    private Map<String, Integer> space;                     // tuple space with mapped lock for the TAKE operation
+                                                            // space={"<a,b>": -1, "<c,d>": 1, "<e,f>": -1, "<g,h>": 2, ...}
                                                             // key: tuple, value: N (lock status)
                                                             // N = -1 => the tuple is free
                                                             // N > 0  => the tuple is locked by client N
@@ -21,7 +21,7 @@ public class ServerState {
 
     public ServerState(boolean debug) {
         this.DEBUG = debug;
-        this.locks = new HashMap<String, Integer>();
+        this.space = new HashMap<String, Integer>();
     }
 
     /**
@@ -38,7 +38,7 @@ public class ServerState {
                 
                 List<String> matches = new ArrayList<String>(); // list of tuples that match the pattern
                 
-                for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {    // iterate over the tuple space
+                for (Map.Entry<String, Integer> entry : this.space.entrySet()) {    // iterate over the tuple space
                     if (entry.getKey().matches(pattern)) {                              // if the tuple matches the pattern
                         if (entry.getValue() == -1 || entry.getValue() == clientId) {   // if the tuple is free or if the tuple is locked, but it's locked by the client
                             entry.setValue(clientId);       // lock the tuple for the client
@@ -70,7 +70,7 @@ public class ServerState {
                 }
                 else {                      // HIT: the client got successfully locks for the tuples
                     if (DEBUG) {
-                        System.err.println("[\u001B[34mDEBUG\u001B[0m] HIT: " + this.locks);
+                        System.err.println("[\u001B[34mDEBUG\u001B[0m] HIT: " + this.space);
                     }
                     return matches; // return the list of tuples that match the pattern
                 }
@@ -89,7 +89,7 @@ public class ServerState {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Freeing possible locks for client %d\n", clientId);
         }
 
-        for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {    // iterate over the tuple space
+        for (Map.Entry<String, Integer> entry : this.space.entrySet()) {    // iterate over the tuple space
             if (entry.getValue() == clientId) {       // if the tuple is locked by the client
                 entry.setValue(-1);                   // unlock the tuple for the client
                 if (DEBUG) {
@@ -104,7 +104,7 @@ public class ServerState {
      * @param tuple the tuple to be added
      */
     public synchronized void put(String tuple) {
-        this.locks.put(tuple, -1);
+        this.space.put(tuple, -1);
 
         if (DEBUG) {
             System.err.println("[\u001B[34mDEBUG\u001B[0m] Added tuple: " + tuple);
@@ -119,7 +119,7 @@ public class ServerState {
      * @return the tuple that matches the pattern
      */
     private String getMatchingTuple(String pattern) {
-        for (Map.Entry<String, Integer> entry : this.locks.entrySet()) {
+        for (Map.Entry<String, Integer> entry : this.space.entrySet()) {
             if (entry.getKey().matches(pattern)) { return entry.getKey(); }
         }
 
@@ -168,7 +168,7 @@ public class ServerState {
         while (true) {
             String t = getMatchingTuple(pattern);
             if (t != null) {
-                this.locks.remove(t);
+                this.space.remove(t);
 
                 if (DEBUG) {
                     System.err.printf("[\u001B[34mDEBUG\u001B[0m] Took tuple %s for pattern: %s%n", t, pattern);
@@ -195,7 +195,7 @@ public class ServerState {
      */
     public synchronized List<String> getTupleSpacesState() {
 
-        List<String> tupleSpacesState = new ArrayList<String>(this.locks.keySet());
+        List<String> tupleSpacesState = new ArrayList<String>(this.space.keySet());
 
         if (DEBUG) {
             System.err.println("[\u001B[34mDEBUG\u001B[0m] Got tuple space state");
