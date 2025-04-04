@@ -32,6 +32,7 @@ public class ServerState {
      * @return true if the lock is granted to the client
      */
     public List<String> acquireLock(int clientId, String pattern) {
+        boolean hasAtLeastOneMatchLocked = false;
 
         while (true) {
             synchronized (this) {
@@ -49,16 +50,16 @@ public class ServerState {
                         }
                         else {
                             // if the tuple matches the pattern but is locked by another client
-                            // Xu Liskov algorithm: return unsuccessful (empty list) to force the client to retry
+                            // we keep going to check the other tuples
+                            hasAtLeastOneMatchLocked = true;
                             if (DEBUG) {
-                                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock denied to client %d for tuple %s - client needs to retry\n", clientId, entry.getKey());
+                                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Lock denied to client %d for tuple %s - locked by client %d\n", clientId, entry.getKey(), entry.getValue());
                             }
-                            return new ArrayList<String>(); // return empty list
                         }
                     }
                 }
 
-                if (matches.isEmpty()) {    // MISS: the client didn't get any locks, i.e., there are no matching tuples
+                if (matches.isEmpty() && !hasAtLeastOneMatchLocked) {    // MISS: the client didn't get any locks because there are no matching tuples
                     if (DEBUG) {
                         System.err.printf("[\u001B[34mDEBUG\u001B[0m] MISS: No tuples found for client %d with pattern %s. Block until a tuple is added\n", clientId, pattern);
                     }
@@ -68,7 +69,7 @@ public class ServerState {
                         throw new RuntimeException(e);
                     }
                 }
-                else {                      // HIT: the client got successfully locks for the tuples
+                else {                      // HIT: the client successfully acquired locks for the tuples OR the client got no locks but it has matching tuples that are locked by other clients
                     if (DEBUG) {
                         System.err.println("[\u001B[34mDEBUG\u001B[0m] HIT: " + this.space);
                     }
