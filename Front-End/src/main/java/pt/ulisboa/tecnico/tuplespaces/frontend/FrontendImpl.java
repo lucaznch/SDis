@@ -197,20 +197,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response
             
-            /**
-             * before completing the call, onComplete(), we need to handle the two remaining responses from the servers
-             * two choices:
-             * 1. cancel the two remaining observers
-             * 2. wait for the two remaining responses
-             */
-            if (this.DEBUG) {
-                System.err.println("[\u001B[34mDEBUG\u001B[0m] Frontend waiting for the two remaining responses...");
-            }
-            this.collector.waitUntilAllReceived(currentRequestId, 3);       // wait until all servers respond
-            // result = this.collector.getResponse(currentRequestId, "PUT");   // for debugging purposes only: print the responses from the 3 servers
-            if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received READ responses (#%d) from remaining servers\n", currentRequestId);
-            }
+
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
         catch (StatusRuntimeException e) {

@@ -5,6 +5,7 @@ import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesGrpc;
 import pt.ulisboa.tecnico.tuplespaces.replicated.contract.TupleSpacesOuterClass;
 
 import io.grpc.stub.StreamObserver;
+import io.grpc.Status;
 
 
 /**
@@ -44,7 +45,13 @@ public class FrontendReadObserver implements StreamObserver<TupleSpacesOuterClas
      */
     @Override
     public void onError(Throwable t) {
-        System.out.println("READ error: " + t.getMessage());
+        if (Status.fromThrowable(t).getCode().equals(Status.Code.CANCELLED)) { 
+            // ignore - loss of context
+            return;
+        }
+        else {
+            System.err.printf("[\u001B[34mDEBUG\u001B[0m] FrontendReadObserver: error on READ request %d to server %d: %s\n", this.requestId, this.serverId, t.toString());
+        }
     }
 
     /**
