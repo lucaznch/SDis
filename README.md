@@ -84,7 +84,7 @@ In the `Client-Java` directory:
     ```bash
     mvn compile exec:java -Dexec.args="<host:port> <client_id> [-debug]"
     ```
-    - e.g., `mvn exec:java -Dexec.args="localhost:2001 1"`
+    - e.g., `mvn compile exec:java -Dexec.args="localhost:2001 1"`
 - Run the client with predefined arguments from **pom.xml**:
     ```bash
     mvn compile exec:java
