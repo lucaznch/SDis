@@ -24,11 +24,6 @@ message LockResponse {
   repeated string match = 1;
 }
 
-message UnlockRequest {
-  int32 clientId = 1;
-}
-message UnlockResponse {}
-
 message TakeRequest {
   int32 clientId = 1;
   string searchPattern = 2;
@@ -48,5 +43,4 @@ service TupleSpaces {
   rpc take(TakeRequest) returns (TakeResponse);
   rpc getTupleSpacesState(getTupleSpacesStateRequest) returns (getTupleSpacesStateResponse);
   rpc requestLock(LockRequest) returns (LockResponse);
-  rpc releaseLock(UnlockRequest) returns (UnlockResponse);
 }

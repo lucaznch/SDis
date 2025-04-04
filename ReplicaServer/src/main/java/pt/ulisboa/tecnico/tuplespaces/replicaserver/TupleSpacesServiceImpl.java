@@ -134,6 +134,8 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
             }
         }
 
+        int clientId = request.getClientId();
+
         String tuple = this.serverState
                             .take(request.getSearchPattern());      // take tuple from tuple space
 
@@ -146,6 +148,8 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
         if (this.DEBUG) {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending TAKE response in %s, %s\n\n", Thread.currentThread().getName(), tuple);
         }
+
+        this.serverState.freeLock(clientId);                        // free the lock after taking the tuple
 
         responseObserver.onNext(response);                          // use the responseObserver to send the response
         responseObserver.onCompleted();                             // after sending the response, complete the call

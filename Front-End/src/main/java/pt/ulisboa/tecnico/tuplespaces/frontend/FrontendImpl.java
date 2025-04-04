@@ -347,6 +347,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
         TupleSpacesOuterClass.TakeRequest serverRequest =
                                 TupleSpacesOuterClass.TakeRequest
                                                     .newBuilder()
+                                                    .setClientId(clientId)
                                                     .setSearchPattern(commonResult)
                                                     .build();   // construct a new Protobuffer object to send as request to the SERVER
 
@@ -385,40 +386,7 @@ public class FrontendImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
                                                     .setResult(result)
                                                     .build();   // construct a new Protobuffer object to send as response to the CLIENT
 
-
             clientResponseObserver.onNext(clientResponse);      // use the responseObserver to send the response to the CLIENT
-            
-            TupleSpacesOuterClass.UnlockRequest unlockRequest = 
-                                    TupleSpacesOuterClass.UnlockRequest
-                                                        .newBuilder()
-                                                        .setClientId(clientId)
-                                                        .build();   // construct a new Protobuffer object to send as request to the SERVER
-
-            // release the locks
-            try {
-                for (int i = 0; i < this.numServers; i++) { // make async calls sending the request to the two servers in voter set
-                    if (i == voterOne || i == voterTwo) {
-                        this.stubs[i].releaseLock(unlockRequest, new FrontendUnlockObserver(i, currentRequestId, searchPattern, retryCount, this.collector));
-                        if (this.DEBUG) {
-                            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sent UNLOCK request (#%d) to server %d\n", currentRequestId, i);
-                        }
-                    }
-                }
-
-                this.collector.waitUntilAllLockReceived(currentRequestId, retryCount, "UNLOCK");
-
-                if (this.DEBUG) {
-                    System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend received UNLOCK responses (#%d) from both servers\n", currentRequestId);
-                }
-            }
-            catch (StatusRuntimeException e) {
-                e.printStackTrace();
-            }
-            
-            if (this.DEBUG) {
-                System.err.printf("[\u001B[34mDEBUG\u001B[0m] Frontend sending TAKE response (#%d) back to client\n", currentRequestId);
-            }
-
             clientResponseObserver.onCompleted();               // after sending the response, complete the call
         }
         catch (StatusRuntimeException e) {
