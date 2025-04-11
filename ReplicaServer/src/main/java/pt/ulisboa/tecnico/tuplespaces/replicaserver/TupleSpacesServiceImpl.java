@@ -183,30 +183,6 @@ public class TupleSpacesServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase 
     }
 
     @Override
-    public void releaseLock(TupleSpacesOuterClass.UnlockRequest request, StreamObserver<TupleSpacesOuterClass.UnlockResponse> responseObserver) {
-        if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received UNLOCK request in %s, %s", Thread.currentThread().getName(), request);
-        }
-
-        int clientId = request.getClientId();
-
-        this.serverState.freeLock(clientId);
-
-        // Send response
-        TupleSpacesOuterClass.UnlockResponse response =
-            TupleSpacesOuterClass.UnlockResponse
-                                .newBuilder()
-                                .build();
-
-        if (this.DEBUG) {
-            System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server sending UNLOCK response in %s, OK\n\n", Thread.currentThread().getName());
-        }        
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-
-    @Override
     public void getTupleSpacesState(TupleSpacesOuterClass.getTupleSpacesStateRequest request, StreamObserver<TupleSpacesOuterClass.getTupleSpacesStateResponse> responseObserver) {
         if (this.DEBUG) {
             System.err.printf("[\u001B[34mDEBUG\u001B[0m] Server received GET-TUPLE-SPACES-STATE request in %s%n", Thread.currentThread().getName());
