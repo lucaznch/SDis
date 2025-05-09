@@ -2,26 +2,16 @@
 
 Distributed Systems Project 2025
 
-**Group T18**
+- **Group T18**
+- **Difficulty level: I am Death incarnate!**
 
-**Difficulty level: I am Death incarnate!**
-
-
-### Team Members
-
-
-| Number | Name              | User                              | Email                                  |
-|--------|-------------------|-----------------------------------|----------------------------------------|
-| 102637  | Gabriel Silva    | <https://github.com/lucaznch>     | <gabriel.da.silva@tecnico.ulisboa.pt>  |
-| 106524  | Miguel Sousa     | <https://github.com/pombcoraft>   | <miguel.de.sousa@tecnico.ulisboa.pt>   | 
-| 106581  | Afonso Dias      | <https://github.com/afonsodias37> | <afonso.lopes.dias@tecnico.ulisboa.pt> |
 
 ## Getting Started
 
-The overall system is made up of several modules.
-The definition of messages and services is in _Contract_.
+The overall system is made up of several modules. The definition of messages and services is in _Contract_.
 
-See the [Project Statement](https://github.com/tecnico-distsys/Tuplespaces-2025) for a complete domain and system description.
+See the [Project Statement](./tuplespaces.md) for a complete domain and system description.
+
 
 ### Prerequisites
 
@@ -35,6 +25,7 @@ javac -version
 mvn -version
 ```
 
+
 ### Installation
 
 To compile and install all modules:
@@ -43,7 +34,9 @@ To compile and install all modules:
 mvn clean install
 ```
 
+
 ### Execution
+
 In the **root** directory of the project, create a virtual environment, activate it and install the required packages:
 ```bash
 python3 -m venv .venv
@@ -105,3 +98,4 @@ python3 client_main.py <host:port> <client_id> [-debug]
 
 * [Maven](https://maven.apache.org/) - Build and dependency management tool;
 * [gRPC](https://grpc.io/) - RPC framework.
+
